@@ -1,0 +1,24 @@
+#!/bin/bash
+sudo chown -R $USER /usr/local/bin
+
+REPO_URL="https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/"
+SCRIPTS=("addc" "addh" "adds" "addt" "push" "getlib")
+LOCAL_FOLDER="/usr/local/bin/"
+DEST_FOLDER="/usr/utility-scripts-template/"
+
+sudo mkdir -p "$DEST_FOLDER"
+for script in "${SCRIPTS[@]}"; do
+    github_version=$(sudo curl -s -L "$REPO_URL/$script")
+    if [ -f "$LOCAL_FOLDER/$script" ]; then
+        local_version=$(sudo cat "$LOCAL_FOLDER/$script")
+        if [[ "$local_version" != "$github_version" ]]; then
+            sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
+            sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
+            echo "Mise à jour de $script effectuée."
+        fi
+    else
+        sudo curl -L "$REPO_URL/$script" -o "$LOCAL_FOLDER/$script"
+        sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
+        echo "$script a été téléchargé."
+    fi
+done
