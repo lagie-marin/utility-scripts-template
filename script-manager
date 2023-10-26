@@ -6,7 +6,7 @@ DEST_FOLDER="/usr/utility-scripts-template/"
 
 mkdir -p "$DEST_FOLDER"
 for script in "${SCRIPTS[@]}"; do
-    github_version=$(curl -s -L "$REPO_URL/$script")
+    github_version=$(sudo curl -s -L "$REPO_URL/$script")
     if [ -f "$LOCAL_FOLDER/$script" ]; then
         local_version=$(sudo cat "$LOCAL_FOLDER/$script")
         if [[ "$local_version" != "$github_version" ]]; then
