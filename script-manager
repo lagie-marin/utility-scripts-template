@@ -1,4 +1,5 @@
 #!/bin/bash
+#salut
 REPO_URL="https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/"
 SCRIPTS=("addc" "addh" "adds" "addt" "push" "getlib" "script-manager")
 LOCAL_FOLDER="/usr/local/bin/"
