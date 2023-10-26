@@ -8,7 +8,7 @@ mkdir -p "$DEST_FOLDER"
 for script in "${SCRIPTS[@]}"; do
     github_version=$(curl -s -L "$REPO_URL/$script")
     if [ -f "$LOCAL_FOLDER/$script" ]; then
-        local_version=$(cat "$LOCAL_FOLDER/$script")
+        local_version=$(sudo cat "$LOCAL_FOLDER/$script")
         if [[ "$local_version" != "$github_version" ]]; then
             sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
             sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
