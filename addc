@@ -26,10 +26,20 @@ dirname="Unknown"
 
 while [ "$currentpwd" != "/" ]; do
     if [ -d "$currentpwd/.git" ]; then
-    dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
-    break
+        dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+        break
     fi
     currentpwd=$(dirname $currentpwd)
+done
+
+# Determine the depth of the file relative to the project root
+depth=""
+currentdir="$basepwd"
+projectroot=$(git rev-parse --show-toplevel)  # Trouve le répertoire racine du projet
+
+while [ "$currentdir" != "$projectroot" ]; do
+    depth="../$depth"
+    currentdir=$(dirname "$currentdir")
 done
 
 year=$(date +%Y)
@@ -40,7 +50,13 @@ echo "/*
 ** $1.c
 */" > $basepwd/"$1.c"
 
-echo -e "\n#include \"include/my.h\"\n\nint $1(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $1();\n    return (0);\n}" >> $basepwd/"$1.c"
+# Generate the include based on the depth
+include="include/my.h"
+if [ -n "$depth" ]; then
+    include="${depth}${include}"
+fi
+
+echo -e "\n#include \"$include\"\n\nint $1(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $1();\n    return (0);\n}" >> $basepwd/"$1.c"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
