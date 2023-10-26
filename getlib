@@ -1,0 +1,11 @@
+#!/bin/sh
+git clone git@github.com:lagie-marin/libs.git
+cd ./libs
+mv * ../
+cd ../
+rm -rf libs
+cd lib/my
+make
+make clean
+cd ../..
+echo lib/my/libmy.a >> .gitignore

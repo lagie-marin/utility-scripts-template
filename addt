@@ -1,0 +1,46 @@
+#!/bin/bash
+# This script will create a C file with the epitech Header
+# Usage: ./touch_h [file_name]
+
+if (( $# != 1 )); then
+    echo "Usage: ./touch_h [file_name]"
+    exit 84
+fi
+
+if [ -f "$1.c" ]; then
+    echo "Error: File $1.c already exists"
+    exit 84
+fi
+
+touch "$1.c"
+if (( $? != 0 )); then
+    echo "Error: Can't create file $1.c"
+    exit 84
+fi
+
+basepwd=$(pwd)
+currentpwd=$(pwd)
+dirname="Unknown"
+
+while [ "$currentpwd" != "/" ]; do
+    if [ -d "$currentpwd/.git" ]; then
+    dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+    break
+    fi
+    currentpwd=$(dirname $currentpwd)
+done
+
+year=$(date +%Y)
+echo "/*
+** EPITECH PROJECT, $year
+** $dirname
+** File description:
+** $1.c
+*/" > $basepwd/"$1.c"
+echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> $basepwd/"$1.c"
+G='\033[0;32m'
+NC='\033[0m'
+RED='\e[0;31m'
+echo -e "${G}file $1.c has been created${NC}"
+code $1.c
+echo -e "${RED}Loading resources...${NC}"
