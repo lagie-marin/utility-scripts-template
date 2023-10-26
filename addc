@@ -50,7 +50,6 @@ echo "/*
 ** $1.c
 */" > $basepwd/"$1.c"
 
-# Generate the include based on the depth
 include="include/my.h"
 if [ -n "$depth" ]; then
     include="${depth}${include}"
