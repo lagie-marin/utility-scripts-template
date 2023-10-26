@@ -3,6 +3,7 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+script-manager
 if (( $# != 1 )); then
     echo "Usage: ./touch_h [file_name]"
     exit 84
