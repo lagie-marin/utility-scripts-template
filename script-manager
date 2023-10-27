@@ -1,6 +1,6 @@
 #!/bin/bash
 REPO_URL="https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/"
-SCRIPTS=("addc" "addh" "adds" "addt" "push" "getlib" "script-manager")
+SCRIPTS=("script-manager" "getlib" "addc" "addh" "adds" "addt" "push")
 LOCAL_FOLDER="/usr/local/bin/"
 DEST_FOLDER="/usr/utility-scripts-template/"
 
@@ -9,14 +9,45 @@ for script in "${SCRIPTS[@]}"; do
     github_version=$(curl -s -L "$REPO_URL/$script")
     if [ -f "$LOCAL_FOLDER/$script" ]; then
         local_version=$(cat "$LOCAL_FOLDER/$script")
-        if [[ "$local_version" != "$github_version" ]]; then
-            sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
-            sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
-            echo "Mise à jour de $script effectuée."
-        fi
     else
         sudo curl -L "$REPO_URL/$script" -o "$LOCAL_FOLDER/$script"
+        echo "$script has been downloaded."
+        local_version=$(github_version)
+    fi
+    if [ "$script" == "getlib" ]; then
+        clone_data=$(sed -n "3p" "$LOCAL_FOLDER/$script")
+        if [[ "$clone_data" != "git clone https"* ]]; then
+            while true; do
+                read -p "Enter the HTTPS link to the library repository: " lib_repo
+                if [[ "$lib_repo" =~ ^https://.*\.git$ ]]; then
+                    sudo sed -i "3igit clone $lib_repo" "$LOCAL_FOLDER/$script"
+                    break
+                else
+                    echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."
+                fi
+            done
+        fi
+        local_version=$(cat "$LOCAL_FOLDER/$script" | sed '3d')
+    fi
+    if [[ "$local_version" != "$github_version" ]]; then
+
+        sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
         sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
-        echo "$script a été téléchargé."
+        if [ "$script" == "getlib" ]; then
+            if [[ "$clone_data" == "git clone https"* ]]; then
+                sudo sed -i "3igit clone $lib_repo" "$LOCAL_FOLDER/$script"
+            else
+                while true; do
+                    read -p "Enter the HTTPS link to the library repository: " lib_repo
+                    if [[ "$lib_repo" =~ ^https://.*\.git$ ]]; then
+                        sudo sed -i "3igit clone $lib_repo" "$LOCAL_FOLDER/$script"
+                        break
+                    else
+                        echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."
+                    fi
+                done
+            fi
+        fi
+        echo "$script update done."
     fi
 done
