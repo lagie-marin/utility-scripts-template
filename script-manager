@@ -1,4 +1,10 @@
 #!/bin/bash
+PING_TARGET="www.google.com"
+
+if ! ping -c 1 "$PING_TARGET" &> /dev/null; then
+    exit 1
+fi
+
 REPO_URL="https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/"
 SCRIPTS=("script-manager" "getlib" "addc" "addh" "adds" "addt" "push")
 LOCAL_FOLDER="/usr/local/bin/"
