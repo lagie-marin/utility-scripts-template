@@ -10,7 +10,6 @@ SCRIPTS=("script-manager" "getlib" "addc" "addh" "adds" "addt" "push")
 LOCAL_FOLDER="/usr/local/bin/"
 DEST_FOLDER="/usr/utility-scripts-template/"
 
-mkdir -p "$DEST_FOLDER"
 for script in "${SCRIPTS[@]}"; do
     github_version=$(curl -s -L "$REPO_URL/$script")
     if [ -f "$LOCAL_FOLDER/$script" ]; then
