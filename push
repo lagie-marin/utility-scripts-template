@@ -1,5 +1,8 @@
 #!/bin/sh
-script-manager
+if [ "$1" != "-d" ]
+then
+    script-manager
+fi
 git add .
 git commit -m "$1"
 git push origin main

@@ -1,5 +1,8 @@
 #!/bin/sh
-script-manager
+if [ "$1" != "-d" ]
+then
+    script-manager
+fi
 cd ./libs
 mv -f * ../
 cd ../
