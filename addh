@@ -11,14 +11,14 @@ if (( $# != 1 )); then
     exit 84
 fi
 
-if [ -f "$1.h" ]; then
-    echo "Error: File $1.h already exists"
+if [ -f "$2.h" ]; then
+    echo "Error: File $2.h already exists"
     exit 84
 fi
 
-touch "$1.h"
+touch "$2.h"
 if (( $? != 0 )); then
-    echo "Error: Can't create file $1.h"
+    echo "Error: Can't create file $2.h"
     exit 84
 fi
 
@@ -39,13 +39,13 @@ echo "/*
 ** EPITECH PROJECT, $year
 ** $dirname
 ** File description:
-** $1.h
-*/" > $basepwd/"$1.h"
+** $2.h
+*/" > $basepwd/"$2.h"
 
-echo -e "#pragma once" >> $basepwd/"$1.h"
+echo -e "#pragma once" >> $basepwd/"$2.h"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
-echo -e "${G}file $1.h has been created${NC}"
-code $1.h
+echo -e "${G}file $2.h has been created${NC}"
+code $2.h
 echo -e "${RED}Loading resources...${NC}"
