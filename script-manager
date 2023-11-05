@@ -20,19 +20,19 @@ for script in "${SCRIPTS[@]}"; do
         local_version=$(github_version)
     fi
     if [ "$script" == "getlib" ]; then
-        clone_data=$(sed -n "3p" "$LOCAL_FOLDER/$script")
+        clone_data=$(sed -n "6p" "$LOCAL_FOLDER/$script")
         if [[ "$clone_data" != "git clone https"* ]]; then
             while true; do
                 read -p "Enter the HTTPS link to the library repository: " lib_repo
                 if [[ "$lib_repo" =~ ^https://.*\.git$ ]]; then
-                    sudo sed -i "3i git clone $lib_repo" "$LOCAL_FOLDER/$script"
+                    sudo sed -i "6i git clone $lib_repo" "$LOCAL_FOLDER/$script"
                     break
                 else
                     echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."
                 fi
             done
         fi
-        local_version=$(cat "$LOCAL_FOLDER/$script" | sed '3d')
+        local_version=$(cat "$LOCAL_FOLDER/$script" | sed '6d')
     fi
     if [[ "$local_version" != "$github_version" ]]; then
 
@@ -40,12 +40,12 @@ for script in "${SCRIPTS[@]}"; do
         sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
         if [ "$script" == "getlib" ]; then
             if [[ "$clone_data" == "git clone https"* ]]; then
-                sudo sed -i "3i git clone $lib_repo" "$LOCAL_FOLDER/$script"
+                sudo sed -i "6i git clone $lib_repo" "$LOCAL_FOLDER/$script"
             else
                 while true; do
                     read -p "Enter the HTTPS link to the library repository: " lib_repo
                     if [[ "$lib_repo" =~ ^https://.*\.git$ ]]; then
-                        sudo sed -i "3i git clone $lib_repo" "$LOCAL_FOLDER/$script"
+                        sudo sed -i "6i git clone $lib_repo" "$LOCAL_FOLDER/$script"
                         break
                     else
                         echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."

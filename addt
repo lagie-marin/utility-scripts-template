@@ -2,23 +2,32 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+filename=""
 if [ "$1" != "-d" ]
 then
     script-manager
 fi
-if (( $# != 1 )); then
-    echo "Usage: ./touch_h [file_name]"
+if (( $# < 1 )) || (( $# > 2 )); then
+    echo "Usage: ./touch_h [-d] [file_name]"
     exit 84
 fi
 
-if [ -f "$2.c" ]; then
-    echo "Error: File $2.c already exists"
+for arg in "$@"
+do
+    if [[ $arg != -* ]]; then
+        filename=$arg
+        break
+    fi
+done
+
+if [ -f "$filename.c" ]; then
+    echo "Error: File $filename.c already exists"
     exit 84
 fi
 
-touch "$2.c"
+touch "$filename.c"
 if (( $? != 0 )); then
-    echo "Error: Can't create file $2.c"
+    echo "Error: Can't create file $filename.c"
     exit 84
 fi
 
@@ -39,12 +48,12 @@ echo "/*
 ** EPITECH PROJECT, $year
 ** $dirname
 ** File description:
-** $2.c
-*/" > $basepwd/"$2.c"
-echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> $basepwd/"$2.c"
+** $filename.c
+*/" > $basepwd/"$filename.c"
+echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> $basepwd/"$filename.c"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
-echo -e "${G}file $2.c has been created${NC}"
-code $2.c
+echo -e "${G}file $filename.c has been created${NC}"
+code $filename.c
 echo -e "${RED}Loading resources...${NC}"

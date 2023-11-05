@@ -2,23 +2,32 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+filename=""
 if [ "$1" != "-d" ]
 then
     script-manager
 fi
-if (( $# != 1 )); then
-    echo "Usage: ./touch_h [file_name]"
+if (( $# < 1 )) || (( $# > 2 )); then
+    echo "Usage: ./touch_h [-d] [file_name]"
     exit 84
 fi
 
-if [ -f "$2.h" ]; then
-    echo "Error: File $2.h already exists"
+for arg in "$@"
+do
+    if [[ $arg != -* ]]; then
+        filename=$arg
+        break
+    fi
+done
+
+if [ -f "$filename.h" ]; then
+    echo "Error: File $filename.h already exists"
     exit 84
 fi
 
-touch "$2.h"
+touch "$filename.h"
 if (( $? != 0 )); then
-    echo "Error: Can't create file $2.h"
+    echo "Error: Can't create file $filename.h"
     exit 84
 fi
 
@@ -39,13 +48,13 @@ echo "/*
 ** EPITECH PROJECT, $year
 ** $dirname
 ** File description:
-** $2.h
-*/" > $basepwd/"$2.h"
+** $filename.h
+*/" > $basepwd/"$filename.h"
 
-echo -e "#pragma once" >> $basepwd/"$2.h"
+echo -e "#pragma once" >> $basepwd/"$filename.h"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
-echo -e "${G}file $2.h has been created${NC}"
-code $2.h
+echo -e "${G}file $filename.h has been created${NC}"
+code $filename.h
 echo -e "${RED}Loading resources...${NC}"

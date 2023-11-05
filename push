@@ -1,8 +1,21 @@
 #!/bin/sh
+commit=""
 if [ "$1" != "-d" ]
 then
     script-manager
 fi
+if (( $# < 1 )) || (( $# > 2 )); then
+    echo "Usage: ./touch_h [-d] [file_name]"
+    exit 84
+fi
+
+for arg in "$@"
+do
+    if [[ $arg != -* ]]; then
+        commit=$arg
+        break
+    fi
+done
 git add .
-git commit -m "$2"
+git commit -m "$commit"
 git push origin main

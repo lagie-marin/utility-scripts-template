@@ -1,7 +1,20 @@
 #!/bin/sh
+filename=""
 if [ "$1" != "-d" ]
 then
     script-manager
 fi
-echo "#!/bin/sh" > "$2"
-chmod 755 "$1"
+if (( $# < 1 )) || (( $# > 2 )); then
+    echo "Usage: ./touch_h [-d] [file_name]"
+    exit 84
+fi
+
+for arg in "$@"
+do
+    if [[ $arg != -* ]]; then
+        filename=$arg
+        break
+    fi
+done
+echo "#!/bin/sh" > "$filename"
+chmod 755 "$filename"
