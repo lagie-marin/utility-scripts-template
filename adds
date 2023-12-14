@@ -5,7 +5,7 @@ then
     script-manager
 fi
 if (( $# < 1 )) || (( $# > 2 )); then
-    echo "Usage: ./touch_h [-d] [file_name]"
+    echo "Usage: ./adds [-d] [file_name]"
     exit 84
 fi
 

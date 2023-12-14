@@ -1,0 +1,97 @@
+#!/bin/sh
+if [ "$1" != "-d" ]
+then
+    script-manager
+fi
+NC='\033[0m'
+RED='\e[1;31m'
+while IFS= read -r ligne; do
+    dernier_caractere="${ligne: -4}"
+    echo -ne "${NC}$ligne ${RED}"
+    if [ "$dernier_caractere" = "C-O1" ]; then
+        echo "Contents of the repository"
+    elif [ "$dernier_caractere" = "C-O2" ]; then
+        echo "File extension"
+    elif [ "$dernier_caractere" = "C-O3" ]; then
+        echo "File coherence"
+    elif [ "$dernier_caractere" = "C-O4" ]; then
+        echo "Naming files and folders"
+    elif [ "$dernier_caractere" = "C-G1" ]; then
+        echo "File header"
+    elif [ "$dernier_caractere" = "C-G2" ]; then
+        echo "Separating of functions"
+    elif [ "$dernier_caractere" = "C-G3" ]; then
+        echo "Indentation of preprocessor directives"
+    elif [ "$dernier_caractere" = "C-G4" ]; then
+        echo "Global variables"
+    elif [ "$dernier_caractere" = "C-G5" ]; then
+        echo "include"
+    elif [ "$dernier_caractere" = "C-G6" ]; then
+        echo "Line endings"
+    elif [ "$dernier_caractere" = "C-G7" ]; then
+        echo "Trailing spaces"
+    elif [ "$dernier_caractere" = "C-G8" ]; then
+        echo "Leading/Trailing lines"
+    elif [ "$dernier_caractere" = "C-G9" ]; then
+        echo "Constant values"
+    elif [ "$dernier_caractere" = "C-G10" ]; then
+        echo "Inline assembly"
+    elif [ "$dernier_caractere" = "C-F1" ]; then
+        echo "Coherence of functions"
+    elif [ "$dernier_caractere" = "C-F2" ]; then
+        echo "Naming functions"
+    elif [ "$dernier_caractere" = "C-F3" ]; then
+        echo "Number of columns"
+    elif [ "$dernier_caractere" = "C-F4" ]; then
+        echo "Number of lines"
+    elif [ "$dernier_caractere" = "C-F5" ]; then
+        echo "Number of parameters"
+    elif [ "$dernier_caractere" = "C-F6" ]; then
+        echo "Functions without parameters"
+    elif [ "$dernier_caractere" = "C-F7" ]; then
+        echo "Structures as parameters"
+    elif [ "$dernier_caractere" = "C-F8" ]; then
+        echo "Comments inside a function"
+    elif [ "$dernier_caractere" = "C-F9" ]; then
+        echo "Nested functions"
+    elif [ "$dernier_caractere" = "C-L1" ]; then
+        echo "Code line content"
+    elif [ "$dernier_caractere" = "C-L2" ]; then
+        echo "Indentation"
+    elif [ "$dernier_caractere" = "C-L3" ]; then
+        echo "Spaces"
+    elif [ "$dernier_caractere" = "C-L4" ]; then
+        echo "Curly brackets"
+    elif [ "$dernier_caractere" = "C-L5" ]; then
+        echo "Variable declarations"
+    elif [ "$dernier_caractere" = "C-L6" ]; then
+        echo "Blank lines"
+    elif [ "$dernier_caractere" = "C-V1" ]; then
+        echo "Naming identifiers"
+    elif [ "$dernier_caractere" = "C-V2" ]; then
+        echo "Structures"
+    elif [ "$dernier_caractere" = "C-V3" ]; then
+        echo "Pointers"
+    elif [ "$dernier_caractere" = "C-C1" ]; then
+        echo "Conditional branching"
+    elif [ "$dernier_caractere" = "C-C2" ]; then
+        echo "Ternary operators"
+    elif [ "$dernier_caractere" = "C-C3" ]; then
+        echo "goto"
+    elif [ "$dernier_caractere" = "C-H1" ]; then
+        echo "Content"
+    elif [ "$dernier_caractere" = "C-H2" ]; then
+        echo "Include guard"
+    elif [ "$dernier_caractere" = "C-H3" ]; then
+        echo "Macros"
+    elif [ "$dernier_caractere" = "C-A1" ]; then
+        echo "Constant pointers"
+    elif [ "$dernier_caractere" = "C-A2" ]; then
+        echo "Typing"
+    elif [ "$dernier_caractere" = "C-A3" ]; then
+        echo "Line break at the end of file"
+    elif [ "$dernier_caractere" = "C-A4" ]; then
+        echo "Static"
+    fi
+done < ./coding-style-reports.log
+echo -e "${NC}"
