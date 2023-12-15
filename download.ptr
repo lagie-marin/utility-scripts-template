@@ -1,1 +1,1 @@
-script-manager getlib addc addh adds addt push translate_csr
+script-manager getlib addc addh adds addt push csr translate_csr
