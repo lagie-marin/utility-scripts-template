@@ -1,3 +1,3 @@
 #!/bin/sh
 coding-style . .
-translate_csr
+translate_csr -d
