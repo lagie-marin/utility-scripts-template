@@ -93,5 +93,5 @@ while IFS= read -r ligne; do
     elif [ "$dernier_caractere" = "C-A4" ]; then
         echo "Static"
     fi
-done
+done < ./coding-style-reports.log
 echo -e "${NC}"
