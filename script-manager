@@ -43,7 +43,7 @@ for script in "${SCRIPTS[@]}"; do
     if [[ "$local_version" != "$github_version" ]]; then
 
         sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
-        sudo echo "$github_version" > "$LOCAL_FOLDER/$script"
+        echo "$github_version" | sudo tee "$LOCAL_FOLDER/$script" > /dev/null
         sudo chmod +x "$LOCAL_FOLDER/$script"
         if [ "$script" == "getlib" ]; then
             if [[ "$clone_data" == "git clone https"* ]]; then
