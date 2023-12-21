@@ -1,26 +1,18 @@
 #!/bin/sh
 commit=""
+file_name=""
 
-# Function to display usage information
 display_usage() {
     echo "Usage: $0 [-d] [-f file_name] commit_message"
     exit 84
 }
 
-# Check if the first argument is not '-d'
-if [ "$1" != "-d" ]; then
-    script-manager
-fi
-
-# Parse options
 while getopts ":df:" opt; do
     case $opt in
         d)
-            # Handle -d option
-            # Add code as needed
+            script-manager
             ;;
         f)
-            # Handle -f option (specify a file)
             file_name="$OPTARG"
             ;;
         \?)
@@ -29,24 +21,15 @@ while getopts ":df:" opt; do
             ;;
     esac
 done
-
-# Shift to get past the parsed options
 shift $((OPTIND-1))
-
-# Check if the number of arguments is valid
 if [ $# -ne 1 ]; then
     display_usage
 fi
-
-# Set commit message
 commit="$1"
-
-# Add and commit the specified file if -f option is used
 if [ -n "$file_name" ]; then
     git add "$file_name"
+else
+    git add .
 fi
-
-# Commit and push
-git add .
 git commit -m "$commit"
 git push origin main
