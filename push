@@ -1,21 +1,52 @@
 #!/bin/sh
 commit=""
-if [ "$1" != "-d" ]
-then
+
+# Function to display usage information
+display_usage() {
+    echo "Usage: $0 [-d] [-f file_name] commit_message"
+    exit 84
+}
+
+# Check if the first argument is not '-d'
+if [ "$1" != "-d" ]; then
     script-manager
 fi
-if (( $# < 1 )) || (( $# > 2 )); then
-    echo "Usage: ./push [-d] [file_name]"
-    exit 84
+
+# Parse options
+while getopts ":df:" opt; do
+    case $opt in
+        d)
+            # Handle -d option
+            # Add code as needed
+            ;;
+        f)
+            # Handle -f option (specify a file)
+            file_name="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+            display_usage
+            ;;
+    esac
+done
+
+# Shift to get past the parsed options
+shift $((OPTIND-1))
+
+# Check if the number of arguments is valid
+if [ $# -ne 1 ]; then
+    display_usage
 fi
 
-for arg in "$@"
-do
-    if [[ $arg != -* ]]; then
-        commit=$arg
-        break
-    fi
-done
+# Set commit message
+commit="$1"
+
+# Add and commit the specified file if -f option is used
+if [ -n "$file_name" ]; then
+    git add "$file_name"
+fi
+
+# Commit and push
 git add .
 git commit -m "$commit"
 git push origin main
