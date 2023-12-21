@@ -1,16 +1,16 @@
 #!/bin/sh
 commit=""
 file_name=""
+call_script_manager=true
 
 display_usage() {
     echo "Usage: $0 [-d] [-f file_name] commit_message"
     exit 84
 }
-
 while getopts ":df:" opt; do
-    case $opt in 
+    case $opt in
         d)
-            script-manager
+            call_script_manager=false
             ;;
         f)
             file_name="$OPTARG"
@@ -30,6 +30,10 @@ if [ -n "$file_name" ]; then
     git add "$file_name"
 else
     git add .
+fi
+if $call_script_manager; then
+    echo "ici"
+    script-manager
 fi
 git commit -m "$commit"
 git push origin main
