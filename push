@@ -8,7 +8,7 @@ display_usage() {
 }
 
 while getopts ":df:" opt; do
-    case $opt in
+    case $opt in 
         d)
             script-manager
             ;;
