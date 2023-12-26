@@ -52,6 +52,7 @@ if [ $# -ne 0 ]; then
 fi
 
 if $move_files; then
+    echo ici
     for file in $(find . -type f -name '*.c'); do
         $file_name="$file"
         push_elem "$commit $file"
