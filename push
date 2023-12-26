@@ -45,6 +45,7 @@
     if $move_files && [ -z "$file_name" ]; then
         commit="[AUTO-MOVE]move"
     else
+        echo "ici"
         commit="$1"
     fi
 
@@ -59,11 +60,8 @@
             if [ $is_file_on_github -ne 0 ] || [ $has_local_changes -ne 0 ]; then
                 file_name="$file"
                 push_elem "$commit"
-            else
-                echo "Le fichier $file est déjà à jour sur GitHub."
             fi
         done
-
     else
         push_elem "$commit"
     fi
