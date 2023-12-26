@@ -51,11 +51,21 @@ if [ $# -ne 0 ]; then
 fi
 
 if $move_files; then
-    for file in $(find . -type f -name '*.c'); do
-        echo $file
-        file_name="$file"
-        push_elem "$commit"
+    for file in $(find . -type f -name '*.*'); do
+        git ls-remote --exit-code origin main:"$file" >/dev/null 2>&1
+        is_file_on_github=$?
+
+        git diff --quiet -- "$file"
+        has_local_changes=$?
+
+        if [ $is_file_on_github -ne 0 ] || [ $has_local_changes -ne 0 ]; then
+            file_name="$file"
+            push_elem "$commit"
+        else
+            echo "Le fichier $file est déjà à jour sur GitHub."
+        fi
     done
+
 else
     push_elem "$commit"
 fi
