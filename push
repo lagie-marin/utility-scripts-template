@@ -5,12 +5,12 @@ call_script_manager=true
 move_files=false
 
 display_usage() {
-    echo "Usage: $0 [-d] [-f file_name] [-move] commit_message"
+    echo "Usage: $0 [-d] [-f file_name] [-m] [commit_message]"
     exit 84
 }
 
 push_elem() {
-    local commit="$1"
+    local commit_msg="$1"
     if [ -n "$file_name" ]; then
         git add "$file_name"
     else
@@ -19,7 +19,7 @@ push_elem() {
     if $call_script_manager; then
         script-manager
     fi
-    git commit -m "$commit"
+    git commit -m "$commit_msg"
     git push origin main
 }
 
@@ -33,6 +33,7 @@ while getopts ":dfm" opt; do
             ;;
         m)
             move_files=true
+            commit="[AUTO-MOVE]"
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
@@ -42,15 +43,17 @@ while getopts ":dfm" opt; do
 done
 shift $((OPTIND-1))
 
-if [ $# -ne 1 ]; then
-    display_usage
+if $move_files && [ -z "$commit" ]; then
+    commit="[AUTO-MOVE] Default commit message"
 fi
 
-commit="$1"
+if [ $# -ne 0 ]; then
+    commit="$1"
+fi
 
 if $move_files; then
     for file in $(find . -type f -name '*.c'); do
-        push_elem "[AUTO-MOVE]move $file"
+        push_elem "$commit"
     done
 else
     push_elem "$commit"
