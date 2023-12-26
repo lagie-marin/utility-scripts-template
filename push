@@ -33,7 +33,6 @@ while getopts ":dfm" opt; do
             ;;
         m)
             move_files=true
-            commit="[AUTO-MOVE]move"
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
@@ -43,8 +42,8 @@ while getopts ":dfm" opt; do
 done
 shift $((OPTIND-1))
 
-if $move_files && [ -z "$commit" ]; then
-    commit="[AUTO-MOVE] Default commit message"
+if $move_files && [ -z "$file_name" ]; then
+    commit="[AUTO-MOVE]move"
 fi
 
 if [ $# -ne 0 ]; then
@@ -52,10 +51,9 @@ if [ $# -ne 0 ]; then
 fi
 
 if $move_files; then
-    echo ici
     for file in $(find . -type f -name '*.c'); do
-        $file_name=$file
-        push_elem "$commit $file"
+        file_name="$file"
+        push_elem "$commit"
     done
 else
     push_elem "$commit"
