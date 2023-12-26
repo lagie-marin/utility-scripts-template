@@ -7,6 +7,21 @@ display_usage() {
     echo "Usage: $0 [-d] [-f file_name] commit_message"
     exit 84
 }
+
+push_elem() {
+    local commit="$1"
+    if [ -n "$file_name" ]; then
+        git add "$file_name"
+    else
+        git add .
+    fi
+    if $call_script_manager; then
+        script-manager
+    fi
+    git commit -m "$commit"
+    git push origin main
+}
+
 while getopts ":df:" opt; do
     case $opt in
         d)
@@ -22,17 +37,10 @@ while getopts ":df:" opt; do
     esac
 done
 shift $((OPTIND-1))
+
 if [ $# -ne 1 ]; then
     display_usage
 fi
+
 commit="$1"
-if [ -n "$file_name" ]; then
-    git add "$file_name"
-else
-    git add .
-fi
-if $call_script_manager; then
-    script-manager
-fi
-git commit -m "$commit"
-git push origin main
+push_elem "$commit"
