@@ -53,7 +53,7 @@ fi
 
 if $move_files; then
     for file in $(find . -type f -name '*.c'); do
-        $file_name = "$file"
+        $file_name="$file"
         push_elem "$commit $file"
     done
 else
