@@ -2,9 +2,10 @@
 commit=""
 file_name=""
 call_script_manager=true
+move_files=false
 
 display_usage() {
-    echo "Usage: $0 [-d] [-f file_name] commit_message"
+    echo "Usage: $0 [-d] [-f file_name] [-move] commit_message"
     exit 84
 }
 
@@ -22,13 +23,16 @@ push_elem() {
     git push origin main
 }
 
-while getopts ":df:" opt; do
+while getopts ":df:m" opt; do
     case $opt in
         d)
             call_script_manager=false
             ;;
         f)
             file_name="$OPTARG"
+            ;;
+        m)
+            move_files=true
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
@@ -43,4 +47,11 @@ if [ $# -ne 1 ]; then
 fi
 
 commit="$1"
-push_elem "$commit"
+
+if $move_files; then
+    for file in $(find . -type f -name '*.c'); do
+        push_elem "[AUTO-MOVE]move $file"
+    done
+else
+    push_elem "$commit"
+fi
