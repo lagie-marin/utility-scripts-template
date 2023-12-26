@@ -33,7 +33,7 @@ while getopts ":dfm" opt; do
             ;;
         m)
             move_files=true
-            commit="[AUTO-MOVE]"
+            commit="[AUTO-MOVE]move"
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
