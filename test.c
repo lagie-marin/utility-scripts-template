@@ -5,8 +5,6 @@
 ** test.c
 */
 
-#include "include/my.h"
-
 int test(void)
 {
     return 0;
