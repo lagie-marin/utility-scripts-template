@@ -1,67 +1,45 @@
-    #!/bin/sh
-    commit=""
-    file_name=""
-    call_script_manager=true
-    move_files=false
+#!/bin/sh
+commit=""
+file_name=""
+call_script_manager=true
+display_usage() {
+    echo "Usage: $0 [-d] [-f file_name] commit_message"
+    exit 84
+}
 
-    display_usage() {
-        echo "Usage: $0 [-d] [-f file_name] [-m] [commit_message]"
-        exit 84
-    }
-
-    push_elem() {
-        local commit_msg="$1"
-        if [ -n "$file_name" ]; then
-            git add "$file_name"
-        else
-            git add .
-        fi
-        if $call_script_manager; then
-            script-manager
-        fi
-        git commit -m "$commit_msg"
-        git push origin main
-    }
-
-    while getopts ":dfm" opt; do
-        case $opt in
-            d)
-                call_script_manager=false
-                ;;
-            f)
-                file_name="$OPTARG"
-                ;;
-            m)
-                move_files=true
-                ;;
-            \?)
-                echo "Invalid option: -$OPTARG"
-                display_usage
-                ;;
-        esac
-    done
-    shift $((OPTIND-1))
-
-    if $move_files && [ -z "$file_name" ]; then
-        commit="[AUTO-MOVE]move"
+push_elem() {
+    local commit="$1"
+    if [ -n "$file_name" ]; then
+        git add "$file_name"
     else
-        echo "ici"
-        commit="$1"
+        git add .
     fi
-
-    if $move_files; then
-        for file in $(find . -type f -name '*.*'); do
-            git ls-remote --exit-code origin main:"$file" >/dev/null 2>&1
-            is_file_on_github=$?
-
-            git diff --quiet -- "$file"
-            has_local_changes=$?
-
-            if [ $is_file_on_github -ne 0 ] || [ $has_local_changes -ne 0 ]; then
-                file_name="$file"
-                push_elem "$commit"
-            fi
-        done
-    else
-        push_elem "$commit"
+    if $call_script_manager; then
+        script-manager
     fi
+    git commit -m "$commit"
+    git push origin main
+}
+
+while getopts ":df:" opt; do
+    case $opt in
+        d)
+            call_script_manager=false
+            ;;
+        f)
+            file_name="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+            display_usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ $# -ne 1 ]; then
+    display_usage
+fi
+
+commit="$1"
+push_elem "$commit"
