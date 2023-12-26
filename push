@@ -23,7 +23,7 @@ push_elem() {
     git push origin main
 }
 
-while getopts ":df:m" opt; do
+while getopts ":dfm:" opt; do
     case $opt in
         d)
             call_script_manager=false
