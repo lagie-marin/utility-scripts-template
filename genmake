@@ -1,0 +1,53 @@
+#!/bin/sh
+
+folder_path="."
+files=""
+call_script_manager=true
+makefile_name="Makefile"
+
+display_usage() {
+    echo "Usage: $0 [-d] [-f folderpath]"
+}
+
+generate_makefile() {
+    count=0
+    for file in $files; do
+        echo "    $file \\"
+        if [ $count -eq 0 ]; then
+            echo "SRC = $file \\" > $makefile_name
+        else
+            echo -e "\t$file \\" >> $makefile_name
+        fi
+        count=$((count+1))
+    done
+    echo "" >> $makefile_name
+    echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
+    echo "CFLAGS = -g3" >> $makefile_name
+    echo "NAME = your_name" >> $makefile_name
+    echo "all: \$(NAME)" >> $makefile_name
+    echo "" >> $makefile_name
+    echo -e "\$(NAME): \$(OBJ)\n\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+    echo -e "\nclean:\n\trm -f \${OBJ}\nfclean: clean\n\trm -f \${NAME}" >> $makefile_name
+    echo "re: fclean all" >> $makefile_name
+}
+
+while getopts ":df:" opt; do
+    case $opt in
+        d)
+            call_script_manager=false
+            ;;
+        f)
+            folder_path="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+            display_usage
+            exit 1
+            ;;
+    esac
+done
+files=$(find $folder_path -type f -name "*.c")
+
+generate_makefile
+
+echo "Makefile generated: $makefile_name"
