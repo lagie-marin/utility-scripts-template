@@ -2,23 +2,39 @@
 
 folder_path="."
 files=""
+ignore_folders=()
 call_script_manager=true
+lib=false
 makefile_name="Makefile"
 
 display_usage() {
-    echo "Usage: $0 [-d] [-f folderpath]"
+    echo "Usage: $0 [-d] [-f folderpath] [-i ignore_folder]"
 }
 
 generate_makefile() {
     count=0
+
     for file in $files; do
-        echo "    $file \\"
-        if [ $count -eq 0 ]; then
-            echo "SRC = $file \\" > $makefile_name
+        ignore_file=false
+
+        for ignore_folder in "${ignore_folders[@]}"; do
+            if echo "$file" | grep -q "$ignore_folder"; then
+                ignore_file=true
+                break
+            fi
+        done
+
+        if [ "$ignore_file" = false ]; then
+            echo "    $file \\"
+            if [ $count -eq 0 ]; then
+                echo "SRC = $file \\" > $makefile_name
+            else
+                echo -e "\t$file \\" >> $makefile_name
+            fi
+            count=$((count+1))
         else
-            echo -e "\t$file \\" >> $makefile_name
+            echo "Ignoring file: $file"
         fi
-        count=$((count+1))
     done
     echo "" >> $makefile_name
     echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
@@ -26,18 +42,40 @@ generate_makefile() {
     echo "NAME = your_name" >> $makefile_name
     echo "all: \$(NAME)" >> $makefile_name
     echo "" >> $makefile_name
-    echo -e "\$(NAME): \$(OBJ)\n\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+    echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
+    if $lib; then
+        echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+    else
+        echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
+    fi
     echo -e "\nclean:\n\trm -f \${OBJ}\nfclean: clean\n\trm -f \${NAME}" >> $makefile_name
     echo "re: fclean all" >> $makefile_name
 }
 
-while getopts ":df:" opt; do
+while getopts ":dfil:" opt; do
     case $opt in
         d)
             call_script_manager=false
             ;;
         f)
             folder_path="$OPTARG"
+            ;;
+        i)
+            shift $((OPTIND-2))
+            for folder in "$@"; do
+                if [[ "$folder" != -* ]]; then
+                    if [ -d "$folder" ]; then
+                        ignore_folders+=("$folder")
+                    else
+                        echo "Le chemin $folder n'est pas un dossier."
+                    fi
+                else
+                    break
+                fi
+            done
+            ;;
+        l)
+            lib=true
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
@@ -46,9 +84,11 @@ while getopts ":df:" opt; do
             ;;
     esac
 done
+
 if $call_script_manager; then
     script-manager
 fi
+
 files=$(find $folder_path -type f -name "*.c")
 
 generate_makefile
