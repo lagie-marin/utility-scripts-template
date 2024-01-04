@@ -43,7 +43,7 @@ generate_makefile() {
     echo "all: \$(NAME)" >> $makefile_name
     echo "" >> $makefile_name
     echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
-    if $lib; then
+    if [ "$lib" == true ]; then
         echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
     else
         echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
@@ -52,13 +52,17 @@ generate_makefile() {
     echo "re: fclean all" >> $makefile_name
 }
 
-while getopts ":dfil:" opt; do
+while getopts ":dlfi:" opt; do
     case $opt in
         d)
             call_script_manager=false
             ;;
         f)
             folder_path="$OPTARG"
+            ;;
+        l)
+            echo "oui"
+            lib=true
             ;;
         i)
             shift $((OPTIND-2))
@@ -74,9 +78,6 @@ while getopts ":dfil:" opt; do
                 fi
             done
             ;;
-        l)
-            lib=true
-            ;;
         \?)
             echo "Invalid option: -$OPTARG"
             display_usage
@@ -90,7 +91,7 @@ if $call_script_manager; then
 fi
 
 files=$(find $folder_path -type f -name "*.c")
-
+echo "$lib"
 generate_makefile
 
 echo "Makefile generated: $makefile_name"
