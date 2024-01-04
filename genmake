@@ -61,7 +61,6 @@ while getopts ":dlfi:" opt; do
             folder_path="$OPTARG"
             ;;
         l)
-            echo "oui"
             lib=true
             ;;
         i)
@@ -91,7 +90,7 @@ if $call_script_manager; then
 fi
 
 files=$(find $folder_path -type f -name "*.c")
-echo "$lib"
+
 generate_makefile
 
 echo "Makefile generated: $makefile_name"
