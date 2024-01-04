@@ -46,6 +46,9 @@ while getopts ":df:" opt; do
             ;;
     esac
 done
+if $call_script_manager; then
+    script-manager
+fi
 files=$(find $folder_path -type f -name "*.c")
 
 generate_makefile
