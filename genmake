@@ -13,7 +13,19 @@ display_usage() {
 
 generate_makefile() {
     count=0
+    basepwd=$(pwd)
+    currentpwd=$(pwd)
+    dirname="Unknown"
 
+    while [ "$currentpwd" != "/" ]; do
+        if [ -d "$currentpwd/.git" ]; then
+            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+            break
+        fi
+        currentpwd=$(dirname $currentpwd)
+    done
+    year=$(date +%Y)
+    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##" > $makefile_name
     for file in $files; do
         ignore_file=false
 
@@ -32,8 +44,6 @@ generate_makefile() {
                 echo -e "\t$file \\" >> $makefile_name
             fi
             count=$((count+1))
-        else
-            echo "Ignoring file: $file"
         fi
     done
     echo "" >> $makefile_name
