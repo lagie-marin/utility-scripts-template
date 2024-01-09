@@ -39,7 +39,7 @@ generate_makefile() {
         if [ "$ignore_file" = false ]; then
             echo "    $file \\"
             if [ $count -eq 0 ]; then
-                echo "SRC = $file \\" > $makefile_name
+                echo "SRC = $file \\" >> $makefile_name
             else
                 echo -e "\t$file \\" >> $makefile_name
             fi
