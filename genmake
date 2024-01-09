@@ -25,7 +25,7 @@ generate_makefile() {
         currentpwd=$(dirname $currentpwd)
     done
     year=$(date +%Y)
-    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##" > $makefile_name
+    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
     for file in $files; do
         ignore_file=false
 
