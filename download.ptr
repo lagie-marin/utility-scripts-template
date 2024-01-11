@@ -1,1 +1,1 @@
-getlib script-manager addc addh adds addt push csr translate_csr cl genmake help_emacs
+getlib script-manager addc addh adds addt push csr translate_csr cl genmake help_emacs help_cmd
