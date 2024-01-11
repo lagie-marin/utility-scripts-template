@@ -24,34 +24,36 @@ function get_library_repo {
 }
 
 for script in "${SCRIPTS[@]}"; do
-    github_version=$(curl -s -L "$REPO_URL/$script")
-    if [ -f "$LOCAL_FOLDER/$script" ]; then
-        local_version=$(cat "$LOCAL_FOLDER/$script")
-    else
-        sudo curl -L "$REPO_URL/$script" -o "$LOCAL_FOLDER/$script"
-        sudo chmod +x "$LOCAL_FOLDER/$script"
-        echo "$script has been downloaded."
-        local_version=$(echo "$github_version")
-    fi
-    if [ "$script" == "getlib" ]; then
-        clone_data=$(sed -n "6p" "$LOCAL_FOLDER/$script")
-        if [[ "$clone_data" != "git clone https"* ]]; then
-            get_library_repo
+    if [ "$script" != "getlib" ]; then
+        github_version=$(curl -s -L "$REPO_URL/$script")
+        if [ -f "$LOCAL_FOLDER/$script" ]; then
+            local_version=$(cat "$LOCAL_FOLDER/$script")
+        else
+            sudo curl -L "$REPO_URL/$script" -o "$LOCAL_FOLDER/$script"
+            sudo chmod +x "$LOCAL_FOLDER/$script"
+            echo "$script has been downloaded."
+            local_version=$(echo "$github_version")
         fi
-        local_version=$(cat "$LOCAL_FOLDER/$script" | sed '6d')
-    fi
-    if [[ "$local_version" != "$github_version" ]]; then
+        # if [ "$script" == "getlib" ]; then
+        #     clone_data=$(sed -n "6p" "$LOCAL_FOLDER/$script")
+        #     if [[ "$clone_data" != "git clone https"* ]]; then
+        #         get_library_repo
+        #     fi
+        #     local_version=$(cat "$LOCAL_FOLDER/$script" | sed '6d')
+        # fi
+        if [[ "$local_version" != "$github_version" ]]; then
 
-        sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
-        echo "$github_version" | sudo tee "$LOCAL_FOLDER/$script" > /dev/null
-        sudo chmod +x "$LOCAL_FOLDER/$script"
-        if [ "$script" == "getlib" ]; then
-            if [[ "$clone_data" == "git clone https"* ]]; then
-                sudo sed -i "6i git clone $lib_repo" "$LOCAL_FOLDER/$script"
-            else
-                get_library_repo
+            sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
+            echo "$github_version" | sudo tee "$LOCAL_FOLDER/$script" > /dev/null
+            sudo chmod +x "$LOCAL_FOLDER/$script"
+            if [ "$script" == "getlib" ]; then
+                if [[ "$clone_data" == "git clone https"* ]]; then
+                    sudo sed -i "6i git clone $lib_repo" "$LOCAL_FOLDER/$script"
+                else
+                    get_library_repo
+                fi
             fi
+            echo "$script update done."
         fi
-        echo "$script update done."
     fi
 done
