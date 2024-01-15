@@ -2,10 +2,13 @@
 
 folder_path="."
 files=""
+makefiles=()
 ignore_folders=()
 call_script_manager=true
 lib=false
 makefile_name="Makefile"
+binary_name="bin_name"
+selected_makefiles=()
 
 display_usage() {
     echo "Usage: $0 [-d] [-f folderpath] [-i ignore_folder]"
@@ -28,7 +31,6 @@ generate_makefile() {
     echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
     for file in $files; do
         ignore_file=false
-
         for ignore_folder in "${ignore_folders[@]}"; do
             if echo "$file" | grep -q "$ignore_folder"; then
                 ignore_file=true
@@ -49,58 +51,102 @@ generate_makefile() {
     echo "" >> $makefile_name
     echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
     echo "CFLAGS = -g3" >> $makefile_name
-    echo "NAME = your_name" >> $makefile_name
+    if [ "$lib" == true ]; then
+        echo "NAME = $binary_name.a" >> $makefile_name
+    else
+        echo "NAME = $binary_name" >> $makefile_name
+    fi
     echo "all: \$(NAME)" >> $makefile_name
     echo "" >> $makefile_name
     echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
     if [ "$lib" == true ]; then
         echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
     else
+        for make in $selected_makefiles; do
+            echo -e "\tmake -C $make re"
+        done
         echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
     fi
-    echo -e "\nclean:\n\trm -f \${OBJ}\nfclean: clean\n\trm -f \${NAME}" >> $makefile_name
-    echo "re: fclean all" >> $makefile_name
+    echo -e "\nclean:" >> $makefile_name
+    for make in $selected_makefiles; do
+        echo -e "\tmake -C $make clean" >> $makefile_name
+    done
+    echo -e "\trm -f \${OBJ}" >> $makefile_name
+    echo -e "fclean: clean" >> $makefile_name
+    for make in $selected_makefiles; do
+        echo -e "\tmake -C $make fclean" >> $makefile_name
+    done
+    echo -e "\trm -f \${NAME}" >> $makefile_name
+    echo -e "re: fclean all" >> $makefile_name
 }
 
-while getopts ":dlfi:" opt; do
-    case $opt in
-        d)
-            call_script_manager=false
-            ;;
-        f)
-            folder_path="$OPTARG"
-            ;;
-        l)
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -l*)
             lib=true
             ;;
-        i)
-            shift $((OPTIND-2))
-            for folder in "$@"; do
-                if [[ "$folder" != -* ]]; then
-                    if [ -d "$folder" ]; then
-                        ignore_folders+=("$folder")
-                    else
-                        echo "Le chemin $folder n'est pas un dossier."
-                    fi
-                else
-                    break
-                fi
+        -f)
+            if [[ -n $2 && $2 != -* ]]; then
+                folder_path="$2"
+                shift
+            else
+                echo "Erreur: L'option -f nécessite un paramètre."
+                exit 1
+            fi
+            ;;
+        -i)
+            while [[ -n $2 && $2 != -* ]]; do
+                ignore_folders="$ignore_folders $2"
+                shift
             done
             ;;
-        \?)
-            echo "Invalid option: -$OPTARG"
-            display_usage
-            exit 1
+        -n)
+            binary_name=$2
+            ;;
+        -*)
+            for ((i=1; i<${#1}; i++)); do
+                case ${1:$i:1} in
+                    l)
+                        lib=true
+                        ;;
+                    d)
+                        call_script_manager=false
+                        ;;
+                    f)
+                        echo "f: $1"
+                        ;;
+                    *)
+                        echo "Erreur: Option inconnue: ${1:$i:1}"
+                        exit 1
+                        ;;
+                esac
+            done
             ;;
     esac
+    shift
 done
 
 if $call_script_manager; then
     script-manager
 fi
-
 files=$(find $folder_path -type f -name "*.c")
-
+if [ "$lib" != true ]; then
+    for make in $(find . -type f -name "*Makefile"); do
+        if [ $make != "./Makefile" ]; then
+            makefiles+=" $make"
+        fi
+    done
+    makefiles=("" ${makefiles[@]})
+    if [ "${#makefiles[@]}" -gt 1 ]; then
+        for index in "${!makefiles[@]}"; do
+            echo "$index: ${makefiles[$index]}"
+        done
+        echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
+        read -a selected_indices
+        for index in "${selected_indices[@]}"; do
+            selected_makefiles+=("${makefiles[$index]}")
+        done
+    fi
+fi
 generate_makefile
-
 echo "Makefile generated: $makefile_name"
