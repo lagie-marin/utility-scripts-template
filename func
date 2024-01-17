@@ -1,0 +1,83 @@
+#!/bin/sh
+add_header() {
+    local filename=$1
+    local arg=$2
+    inclusion_s=""
+    inclusion_i=""
+    inclusion_e=""
+    extension=""
+
+    if [ "$arg" = "c" ]; then
+        inclusion_s="/*"
+        inclusion_i="**"
+        inclusion_e="*/"
+        extension=".c"
+    elif [ "$arg" = "make" ]; then
+        inclusion_s="##"
+        inclusion_i="##"
+        inclusion_e="##"
+    else
+        echo "Erreur: Le header $arg n'existe pas!"
+    fi
+    basepwd=$(pwd)
+    currentpwd=$(pwd)
+    dirname="Unknown"
+
+    while [ "$currentpwd" != "/" ]; do
+        if [ -d "$currentpwd/.git" ]; then
+            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+            break
+        fi
+        currentpwd=$(dirname $currentpwd)
+    done
+
+    depth=""
+    currentdir="$basepwd"
+    projectroot=$(git rev-parse --show-toplevel)  # Trouve le répertoire racine du projet
+
+    while [ "$currentdir" != "$projectroot" ]; do
+        depth="../$depth"
+        currentdir=$(dirname "$currentdir")
+    done
+
+    year=$(date +%Y)
+    echo "$inclusion_s" > $basepwd/"$filename$extension"
+    echo "$inclusion_i EPITECH PROJECT, $year" >> $basepwd/"$filename$extension"
+    echo "$inclusion_i $dirname" >> $basepwd/"$filename$extension"
+    echo "$inclusion_i File description:" >> $basepwd/"$filename$extension"
+    echo "$inclusion_i $filename$extension" >> $basepwd/"$filename$extension"
+    echo "$inclusion_e" >> $basepwd/"$filename$extension"
+}
+
+search_file() {
+    local path=$1
+    local files=$2
+
+    echo "$(find $path -type f -name "*$files")"
+}
+
+
+# detect_multiple_file() {
+#     local files_search=$1
+#     selected_files=()
+#     files=()
+#     array_file=$(search_file "." $files_search)
+
+#     for file in $array_file; do
+#         if [ $file != "./Makefile" ]; then
+#             files+=" $file"
+#         fi
+#     done
+#     files=("" ${files[@]})
+#     if [ "${#files[@]}" -gt 1 ]; then
+#         for index in "${!files[@]}"; do
+#             echo "$index: ${files[$index]}"
+#         done
+#         echo "Entrez les numéros des $files_search que vous souhaitez utiliser, séparés par des espaces:"
+#         read -a selected_indices
+#         for index in "${selected_indices[@]}"; do
+#             selected_files+=("${files[$index]}")
+#         done
+#     fi
+#     echo "${selected_files[@]}"
+# }
