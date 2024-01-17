@@ -6,6 +6,8 @@ source ./func
 
 call_script_manager=true
 filename=""
+headerfiles=()
+selected_headerfiles=()
 
 if (( $# < 1 )) || (( $# > 4 )) || (( $# == 3)); then
     echo "Usage: ./addc [-d] [file_name]"
@@ -49,7 +51,22 @@ fi
 if [ "$3" == "-i" ]; then
     include=$4
 fi
-echo -e "\n#include \"$include\"\n\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> $basepwd/"$filename.c"
+for header in $(find . -type f -name "*.h"); do
+    headerfiles+=" $header"
+done
+headerfiles=("" ${headerfiles[@]})
+if [ "${#headerfiles[@]}" -gt 1 ]; then
+    for index in "${!headerfiles[@]}"; do
+        echo "$index: ${headerfiles[$index]}"
+    done
+    echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
+    read -a selected_indices
+    for index in "${selected_indices[@]}"; do
+        # selected_headerfiles+=("${headerfiles[$index]}")
+        echo -e "#include \"${headerfiles[$index]}\"" >> $basepwd/"$filename.c"
+    done
+fi
+echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> $basepwd/"$filename.c"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
