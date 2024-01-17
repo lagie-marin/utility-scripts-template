@@ -62,7 +62,6 @@ if [ "${#headerfiles[@]}" -gt 1 ]; then
     echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
     read -a selected_indices
     for index in "${selected_indices[@]}"; do
-        # selected_headerfiles+=("${headerfiles[$index]}")
         echo -e "#include \"${headerfiles[$index]}\"" >> $basepwd/"$filename.c"
     done
 fi
