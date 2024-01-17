@@ -30,23 +30,12 @@ generate_makefile() {
     year=$(date +%Y)
     echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
     for file in $files; do
-        ignore_file=false
-        for ignore_folder in "${ignore_folders[@]}"; do
-            if echo "$file" | grep -q "$ignore_folder"; then
-                ignore_file=true
-                break
-            fi
-        done
-
-        if [ "$ignore_file" = false ]; then
-            echo "    $file \\"
-            if [ $count -eq 0 ]; then
-                echo "SRC = $file \\" >> $makefile_name
-            else
-                echo -e "\t$file \\" >> $makefile_name
-            fi
-            count=$((count+1))
+        if [ $count -eq 0 ]; then
+            echo "SRC = $file \\" >> $makefile_name
+        else
+            echo -e "\t$file \\" >> $makefile_name
         fi
+        count=$((count+1))
     done
     echo "" >> $makefile_name
     echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
@@ -63,7 +52,7 @@ generate_makefile() {
         echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
     else
         for make in $selected_makefiles; do
-            echo -e "\tmake -C $make re"
+            echo -e "\tmake -C $make re" >> $makefile_name
         done
         echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
     fi
@@ -96,7 +85,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         -i)
             while [[ -n $2 && $2 != -* ]]; do
-                ignore_folders="$ignore_folders $2"
+                if [ "${#ignore_folders[@]}" == 0 ]; then
+                    ignore_folders+=$2
+                else
+                    ignore_folders+="|$2"
+                fi
                 shift
             done
             ;;
@@ -129,11 +122,12 @@ done
 if $call_script_manager; then
     script-manager
 fi
-files=$(find $folder_path -type f -name "*.c")
+
+files=$(find $folder_path -type f -name "*.c" | grep -vE "$ignore_folders*")
 if [ "$lib" != true ]; then
     for make in $(find . -type f -name "*Makefile"); do
         if [ $make != "./Makefile" ]; then
-            makefiles+=" $make"
+            makefiles+="$(echo $make | cut -c 3-)"
         fi
     done
     makefiles=("" ${makefiles[@]})
@@ -144,7 +138,7 @@ if [ "$lib" != true ]; then
         echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
         read -a selected_indices
         for index in "${selected_indices[@]}"; do
-            selected_makefiles+=("${makefiles[$index]}")
+            selected_makefiles+=("${makefiles[$index]//Makefile/}")
         done
     fi
 fi
