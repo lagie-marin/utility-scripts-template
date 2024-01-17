@@ -2,24 +2,34 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+source ./func
+
+call_script_manager=true
 filename=""
-if [ "$1" != "-d" ]
-then
-    script-manager
-fi
+
 if (( $# < 1 )) || (( $# > 4 )) || (( $# == 3)); then
     echo "Usage: ./addc [-d] [file_name]"
     exit 84
 fi
+while getopts ":dlfi:" opt; do
+    case $opt in
+        d)
+            call_script_manager=false
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+    esac
+done
+if $call_script_manager; then
+    script-manager
+fi
 
-for arg in "$@"
-do
+for arg in "$@"; do
     if [[ $arg != -* ]]; then
         filename=$arg
         break
     fi
 done
-
 if [ -f "$filename.c" ]; then
     echo "Error: File $filename.c already exists"
     exit 84
@@ -31,36 +41,7 @@ if (( $? != 0 )); then
     exit 84
 fi
 
-basepwd=$(pwd)
-currentpwd=$(pwd)
-dirname="Unknown"
-
-while [ "$currentpwd" != "/" ]; do
-    if [ -d "$currentpwd/.git" ]; then
-        dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
-        break
-    fi
-    currentpwd=$(dirname $currentpwd)
-done
-
-# Determine the depth of the file relative to the project root
-depth=""
-currentdir="$basepwd"
-projectroot=$(git rev-parse --show-toplevel)  # Trouve le répertoire racine du projet
-
-while [ "$currentdir" != "$projectroot" ]; do
-    depth="../$depth"
-    currentdir=$(dirname "$currentdir")
-done
-
-year=$(date +%Y)
-echo "/*
-** EPITECH PROJECT, $year
-** $dirname
-** File description:
-** $filename.c
-*/" > $basepwd/"$filename.c"
-
+add_header $filename "c"
 include="include/my.h"
 if [ -n "$depth" ]; then
     include="${depth}${include}"
