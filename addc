@@ -2,7 +2,7 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
-source ./func
+source func
 
 call_script_manager=true
 filename=""
