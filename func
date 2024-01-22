@@ -1,4 +1,20 @@
 #!/bin/sh
+
+get_current_folder() {
+    basepwd=$(pwd)
+    currentpwd=$(pwd)
+    dirname="Unknown"
+
+    while [ "$currentpwd" != "/" ]; do
+        if [ -d "$currentpwd/.git" ]; then
+            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+            break
+        fi
+        currentpwd=$(dirname $currentpwd)
+    done
+    echo $currentpwd
+}
+
 add_header() {
     local filename=$1
     local arg=$2
@@ -55,7 +71,6 @@ search_file() {
 
     echo "$(find $path -type f -name "*$files")"
 }
-
 
 # detect_multiple_file() {
 #     local files_search=$1
