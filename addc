@@ -51,7 +51,7 @@ fi
 if [ "$3" == "-i" ]; then
     include=$4
 fi
-for header in $(find . -type f -name "*.h"); do
+for header in $(find $(get_current_folder) -type f -name "*.h"); do
     headerfiles+=" $header"
 done
 headerfiles=("" ${headerfiles[@]})
