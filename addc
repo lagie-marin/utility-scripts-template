@@ -51,8 +51,11 @@ fi
 if [ "$3" == "-i" ]; then
     include=$4
 fi
-for header in $(find $(get_current_folder) -type f -name "*.h"); do
-    headerfiles+=" $header"
+project_dir=$(get_current_folder) # Récupère le répertoire du projet
+for header in $(find $project_dir -type f -name "*.h"); do
+    # Convertit le chemin absolu en un chemin relatif par rapport au répertoire du projet
+    relative_path=$(realpath --relative-to=$project_dir $header)
+    headerfiles+=" $(realpath --relative-to=$(pwd) $header)"
 done
 headerfiles=("" ${headerfiles[@]})
 if [ "${#headerfiles[@]}" -gt 1 ]; then
@@ -62,6 +65,7 @@ if [ "${#headerfiles[@]}" -gt 1 ]; then
     echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
     read -a selected_indices
     for index in "${selected_indices[@]}"; do
+        # echo $(realpath --relative-to=$(pwd) $header)
         echo -e "#include \"${headerfiles[$index]}\"" >> $basepwd/"$filename.c"
     done
 fi
