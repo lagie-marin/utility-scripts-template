@@ -136,7 +136,7 @@ if [[ -z "$ignore_folders" ]]; then
 else
     files=$(find $folder_path -type f -name "*.c" | grep -vE "($ignore_folders)")
 fi
-if [ "$lib" != true || "$force" == true ]; then
+if [ "$lib" != true ] || [ "$force" == true ]; then
     for make in $(find . -type f -name "*Makefile"); do
         if [ $make != "./Makefile" ]; then
             makefiles+="$(echo $make | cut -c 3-)"
