@@ -4,16 +4,22 @@
 
 source func
 
+G='\033[0;32m'
+NC='\033[0m'
+RED='\e[0;31m'
 call_script_manager=true
 filename=""
 headerfiles=()
 selected_headerfiles=()
 
-if (( $# < 1 )) || (( $# > 4 )) || (( $# == 3)); then
+# Vérifie le nombre d'arguments
+if (( $# < 2 )) || (( $# > 3 )); then
     echo "Usage: ./addc [-d] [file_name]"
     exit 84
 fi
-while getopts ":dlfi:" opt; do
+# Traite les options, si l'option "-d" est appelé la commande
+# ne se mettra pas à jour
+while getopts "d" opt; do
     case $opt in
         d)
             call_script_manager=false
@@ -22,57 +28,78 @@ while getopts ":dlfi:" opt; do
             echo "Invalid option: -$OPTARG"
     esac
 done
+# Si call_script_manager est vrai alors il va mettre à
+# jour le script s'il en a besoin
 if $call_script_manager; then
     script-manager
 fi
 
+# Récupère le nom du fichier
 for arg in "$@"; do
+    # Vérifie que l'argument ne commence pas par un -
     if [[ $arg != -* ]]; then
         filename=$arg
         break
     fi
 done
+
+# Vérifie si le fichier existe déjà donne une erreur si c'est le cas
 if [ -f "$filename.c" ]; then
     echo "Error: File $filename.c already exists"
     exit 84
 fi
 
+# Crée le fichier avec le nom donné en argument
 touch "$filename.c"
 if (( $? != 0 )); then
     echo "Error: Can't create file $filename.c"
     exit 84
 fi
 
+# Ajoute le Epi header de Epitech
 add_header $filename "c"
-include="include/my.h"
-if [ -n "$depth" ]; then
-    include="${depth}${include}"
-fi
-if [ "$3" == "-i" ]; then
-    include=$4
-fi
-project_dir=$(get_current_folder) # Récupère le répertoire du projet
+
+# Récupère le répertoire du projet
+project_dir=$(get_current_folder)
+
+# Trouve tous les fichiers d'en-tête et convertit leur chemin en chemin relatif
 for header in $(find $project_dir -type f -name "*.h"); do
-    # Convertit le chemin absolu en un chemin relatif par rapport au répertoire du projet
+    # Convertis le chemin absolu en un chemin relatif par
+    # rapport au répertoire du projet
     relative_path=$(realpath --relative-to=$project_dir $header)
+    # Ajoute les fichiers d'en-tête trouvés dans le repo à une liste.
     headerfiles+=" $(realpath --relative-to=$(pwd) $header)"
 done
+
+# Si des fichiers d'en-tête ont été trouvés, permettent à
+# l'utilisateur de choisir ceux à inclure
 headerfiles=("" ${headerfiles[@]})
+# Vérifie si dans la liste headerfiles il y a au moins 1 fichier d'en-tête
 if [ "${#headerfiles[@]}" -gt 1 ]; then
+    # Boucle sur l'ensemble des fichiers d'en-tête afin de les afficher
+    # sur le terminal.
     for index in "${!headerfiles[@]}"; do
+        # Affiche chaque fichier d'en-tête sur le terminal
         echo "$index: ${headerfiles[$index]}"
     done
     echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
+    # AttendS que l'utilisateur donne les indices des fichiers d'en-tête.
     read -a selected_indices
+
+    # Récupère les indices des fichiers d'en-tête choisis par l'utilisateur
     for index in "${selected_indices[@]}"; do
-        # echo $(realpath --relative-to=$(pwd) $header)
+        # Ajoute le chemin relatif du fichier d'en-tête dans le fichier créé.
         echo -e "#include \"${headerfiles[$index]}\"" >> $basepwd/"$filename.c"
     done
 fi
-echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> $basepwd/"$filename.c"
-G='\033[0;32m'
-NC='\033[0m'
-RED='\e[0;31m'
+# Ajoute les fonctions de base au fichier, c'est-à-dire une fonction qui
+# prend le nom du fichier et la fonction main qui appelle l'autre fonction
+echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> $basepwd/"$filename.c"'\033[0;32m'
+# Permets d'informer à l'utilisateur que le fichier a bien
+# été créé avec sont contenue.
 echo -e "${G}file $filename.c has been created${NC}"
+# Lance le fichier qui a été créé dans vscode.
 code $filename.c
+# Permet d'informer à l'utilisateur que le fichier est entrain
+# d'être chargé sur vscode
 echo -e "${RED}Loading resources...${NC}"
