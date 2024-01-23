@@ -52,7 +52,7 @@ echo "/*
 */" > $basepwd/"$filename.h"
 
 filename_upper=$(echo "$filename" | tr '[:lower:]' '[:upper:]')
-echo -e "#ifndef $filename_upper\n    #define $filename_upper\n#endif" >> "$basepwd/$filename.h"
+echo -e "#ifndef $filename_upper"_H"\n    #define $filename_upper"_H"\n#endif" >> "$basepwd/$filename.h"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
