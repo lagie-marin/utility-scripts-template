@@ -10,6 +10,7 @@ makefile_name="Makefile"
 binary_name="bin_name"
 selected_makefiles=()
 force=false
+update=false
 
 display_usage() {
     echo "Usage: $0 [-d] [-f folderpath] [-i ignore_folder]"
@@ -29,50 +30,72 @@ generate_makefile() {
         currentpwd=$(dirname $currentpwd)
     done
     year=$(date +%Y)
-    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
-    for file in $files; do
-        if [ $count -eq 0 ]; then
-            echo "SRC = $file \\" >> $makefile_name
-        else
-            echo -e "\t$file \\" >> $makefile_name
-        fi
-        count=$((count+1))
-    done
-    echo "" >> $makefile_name
-    echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
-    echo "CFLAGS = -g3" >> $makefile_name
-    if [ "$lib" == true ]; then
-        echo "NAME = $binary_name.a" >> $makefile_name
+    if [ -f "$makefile_name" ]; then
+        #Récupére le numéro de la ligne qui contient "SRC ="
+        src_line=$(grep -n "^SRC =" $makefile_name | cut -d: -f1)
+        # sed -i -e "/^SRC =/,$ d" $makefile_name
+        #Supprime la ligne "SRC ="
+        # sed -i "${src_line}d" $makefile_name
+        sed -i '/^SRC =/,/[^\\]$/d' $makefile_name
+        #Ajoute une nouvelle ligne "SRC ="
+        for file in $files; do
+            if [ $count -eq 0 ]; then
+                sed -i "${src_line}iSRC = $file \\" $makefile_name
+                # echo "SRC = $file \\" >> $makefile_name
+            else
+                # echo -e "\t$file \\" >> $makefile_name
+                sed -i "${src_line}a$file \\" $makefile_name
+                src_line=$((src_line+1))
+            fi
+            count=$((count+1))
+        done
+        echo "" >> $makefile_name
     else
-        echo "NAME = $binary_name" >> $makefile_name
-    fi
-    echo "all: \$(NAME)" >> $makefile_name
-    echo "" >> $makefile_name
-    echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
-    if [ "$lib" == true ]; then
-        if [ "$force" == true ]; then
+        echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
+        for file in $files; do
+            if [ $count -eq 0 ]; then
+                echo "SRC = $file \\" >> $makefile_name
+            else
+                echo -e "\t$file \\" >> $makefile_name
+            fi
+            count=$((count+1))
+        done
+        echo "" >> $makefile_name
+        echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
+        echo "CFLAGS = -g3" >> $makefile_name
+        if [ "$lib" == true ]; then
+            echo "NAME = $binary_name.a" >> $makefile_name
+        else
+            echo "NAME = $binary_name" >> $makefile_name
+        fi
+        echo "all: \$(NAME)" >> $makefile_name
+        echo "" >> $makefile_name
+        echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
+        if [ "$lib" == true ]; then
+            if [ "$force" == true ]; then
+                for make in $selected_makefiles; do
+                    echo -e "\tmake -C $make re" >> $makefile_name
+                done
+            fi
+            echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+        else
             for make in $selected_makefiles; do
                 echo -e "\tmake -C $make re" >> $makefile_name
             done
+            echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
         fi
-        echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
-    else
+        echo -e "\nclean:" >> $makefile_name
         for make in $selected_makefiles; do
-            echo -e "\tmake -C $make re" >> $makefile_name
+            echo -e "\tmake -C $make clean" >> $makefile_name
         done
-        echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
+        echo -e "\trm -f \${OBJ}" >> $makefile_name
+        echo -e "fclean: clean" >> $makefile_name
+        for make in $selected_makefiles; do
+            echo -e "\tmake -C $make fclean" >> $makefile_name
+        done
+        echo -e "\trm -f \${NAME}" >> $makefile_name
+        echo -e "re: fclean all" >> $makefile_name
     fi
-    echo -e "\nclean:" >> $makefile_name
-    for make in $selected_makefiles; do
-        echo -e "\tmake -C $make clean" >> $makefile_name
-    done
-    echo -e "\trm -f \${OBJ}" >> $makefile_name
-    echo -e "fclean: clean" >> $makefile_name
-    for make in $selected_makefiles; do
-        echo -e "\tmake -C $make fclean" >> $makefile_name
-    done
-    echo -e "\trm -f \${NAME}" >> $makefile_name
-    echo -e "re: fclean all" >> $makefile_name
 }
 
 while [[ $# -gt 0 ]]; do
@@ -104,6 +127,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         -force)
             force=true
+            ;;
+        -u)
+            update=true
             ;;
         -*)
             for ((i=1; i<${#1}; i++)); do
@@ -154,5 +180,6 @@ if [ "$lib" != true ] || [ "$force" == true ]; then
         done
     fi
 fi
+echo $files
 generate_makefile
 echo "Makefile generated: $makefile_name"
