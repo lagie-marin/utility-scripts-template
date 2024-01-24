@@ -42,13 +42,13 @@ generate_makefile() {
             if [ $count -eq 0 ]; then
                 sed -i "${src_line}iSRC = $file \\\\" $makefile_name
             else
-                sed -i "${src_line}a$file \\\\" $makefile_name
+                sed -i "${src_line}a\\\t$file \\\\" $makefile_name
                 src_line=$((src_line+1))
             fi
             count=$((count+1))
         done
         sed -i "${src_line}a\\\\" $makefile_name
-        echo "" >> $makefile_name
+        # echo "" >> $makefile_name
     else
         echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
         for file in $files; do
