@@ -12,6 +12,7 @@ if [ ! -f "$SETTINGS_FILE" ]; then
         echo "LIB=true" >> $SETTINGS
     else
         echo "LIB=false" >> $SETTINGS
+    fi
     echo "COLOR_CODE=\'\o033[38;5;214m\'" >> $SETTINGS
     echo "COLOR_COM_I=\'\e[32m\'" >> $SETTINGS
     echo "COLOR_COM=\'\o033[32m\'" >> $SETTINGS
