@@ -27,7 +27,11 @@ add_header() {
         inclusion_s="/*"
         inclusion_i="**"
         inclusion_e="*/"
-        extension=".c"
+        if [ "$arg" = "c" ]; then
+            extension=".c"
+        else
+            extension=".h"
+        fi
     elif [ "$arg" = "make" ]; then
         inclusion_s="##"
         inclusion_i="##"
