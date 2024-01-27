@@ -23,7 +23,7 @@ add_header() {
     inclusion_e=""
     extension=""
 
-    if [ "$arg" = "c" ]; then
+    if [ "$arg" = "c" ] || [ "$arg" = "h" ]; then
         inclusion_s="/*"
         inclusion_i="**"
         inclusion_e="*/"
