@@ -1,4 +1,7 @@
 #!/bin/sh
+#Rend utilisable les commandes dans func dans se fichier
+#Pour l'image c'est le même principe que le include en c
+source func
 
 folder_path="."
 files=""
@@ -20,40 +23,7 @@ generate_makefile() {
     #Initialisation des variables pour le bon fonctionnement de la génération
     #count permets de savoir à quelle tour de boucle on est
     count=0
-    #currentpwd permets de récupérer le répertoire où se trouve l'utilisateur afin par la suite
-    #de trouver le fichier .git
-    currentpwd=$(pwd)
-    #dirname permets de récupérer le nom du repo
-    dirname="Unknown"
-    #Cette boucle permets de récupérer le nom du repo
-    while [ "$currentpwd" != "/" ]; do
-        #Cette condition permets de vérifier s'il y a le dossier .git qui se trouve dans le dossier
-        #afin de récupérer le nom du repo de l'utilisateur
-        if [ -d "$currentpwd/.git" ]; then
-            #Si dossier .git existe il va récupérer le nom du repo
-            #Plusieurs commandes sont utilisé:
-            #git config --get remote.origin.url
-            #   Permets de récupérer l'URL du repo git distant qui est appelé "origin"
-            #sed 's/.*\///'
-            #   sed est un éditeur de flus pour modifier l'URL récupérée. l'expression régulière 's/.*\///'
-            #   supprime tout ce qui précède le dernier /. Cela a pour effet de ne conserver que le nom du repo
-            #   dans l'URL
-            #sed 's/\.git//'
-            #   Permets de supprimer l'extension .git du nom du repo
-            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
-            break
-        fi
-        #dirname $currentpwd
-        #   renvoie le chemin du répertoire parent de la valeur contenue dans la variable currentpwd
-        #   Par exemple:
-        #       dirname /home/marinlagie/epitech/project/utility-scripts-template
-        #       renvoie: /home/marinlagie/epitech/project
-        currentpwd=$(dirname $currentpwd)
-    done
-    #Permets de récupérer l'année actuelle
-    year=$(date +%Y)
-    #Ajoute le Epi header au Makefile, il ajoute l'année, le nom du repo et le nom du fichier qui est Makefile
-    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
+    add_header $makefile_name "make"
     #Cette boucle permets de récupérer un par un les fichiers qui se trouve dans la variable files
     for file in $files; do
         #On vérifie que count est égale à 0, si c'est le cas on va ajouter la ligne SRC = avec
