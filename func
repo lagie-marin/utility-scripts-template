@@ -1,28 +1,56 @@
 #!/bin/sh
 
+#get_current_folder permet de récuperer le nom du repo
 get_current_folder() {
-    basepwd=$(pwd)
+    #currentpwd permets de récupérer le répertoire où se trouve l'utilisateur afin par la suite
+    #de trouver le fichier .git
     currentpwd=$(pwd)
+    #dirname permets de récupérer le nom du repo
     dirname="Unknown"
-
+    #Cette boucle permets de récupérer le nom du repo
     while [ "$currentpwd" != "/" ]; do
+        #Cette condition permets de vérifier s'il y a le dossier .git qui se trouve dans le dossier
+        #afin de récupérer le nom du repo de l'utilisateur
         if [ -d "$currentpwd/.git" ]; then
+            #Si dossier .git existe il va récupérer le nom du repo
+            #Plusieurs commandes sont utilisé:
+            #git config --get remote.origin.url
+            #   Permets de récupérer l'URL du repo git distant qui est appelé "origin"
+            #sed 's/.*\///'
+            #   sed est un éditeur de flus pour modifier l'URL récupérée. l'expression régulière 's/.*\///'
+            #   supprime tout ce qui précède le dernier /. Cela a pour effet de ne conserver que le nom du repo
+            #   dans l'URL
+            #sed 's/\.git//'
+            #   Permets de supprimer l'extension .git du nom du repo
             dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
             break
         fi
+        #dirname $currentpwd
+        #   renvoie le chemin du répertoire parent de la valeur contenue dans la variable currentpwd
+        #   Par exemple:
+        #       dirname /home/marinlagie/epitech/project/utility-scripts-template
+        #       renvoie: /home/marinlagie/epitech/project
         currentpwd=$(dirname $currentpwd)
     done
     echo $currentpwd
 }
 
+#add_header permet d'ajouter le header d'epitech dans les fichiers c, h et make
 add_header() {
+    #filename permets de stocker le nom du fichier
     local filename=$1
+    #arg permet de récupérer le type du fichier
     local arg=$2
+    #inclusion_s permets de stocker le 1er type de commentaire
     inclusion_s=""
+    #inclusion_i permets de stocker le 2è type de commentaire
     inclusion_i=""
+    #inclusion_e permets de stocker le 3è type de fin de commentaire 
     inclusion_e=""
+    #extension permets de stocker le type d'extension du ficher
     extension=""
 
+    #Vérifie que arg contient c ou h car il utilise le même système de commentaire
     if [ "$arg" = "c" ] || [ "$arg" = "h" ]; then
         inclusion_s="/*"
         inclusion_i="**"
@@ -32,35 +60,34 @@ add_header() {
         else
             extension=".h"
         fi
-    elif [ "$arg" = "make" ]; then
+    elif [ "$arg" = "make" ]; then #Si arg = make sa veux dire que c'est pour un Makefile
         inclusion_s="##"
         inclusion_i="##"
         inclusion_e="##"
-    else
+    else #Sinon sa donne une erreur
         echo "Erreur: Le header $arg n'existe pas!"
+        exit 1
     fi
-    basepwd=$(pwd)
-    currentpwd=$(pwd)
-    dirname="Unknown"
-
-    while [ "$currentpwd" != "/" ]; do
-        if [ -d "$currentpwd/.git" ]; then
-            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
-            break
-        fi
-        currentpwd=$(dirname $currentpwd)
-    done
-
+    #Récupére le nom du repo
+    currentpwd=$(get_current_folder)
+    #Récupère la profondeurs du dossier pour le début du chemin relatif vers le fichier à pointer
+    #Par exemple s'il a une profondeur de 3 il y aura ../../../
     depth=""
-    currentdir="$basepwd"
-    projectroot=$(git rev-parse --show-toplevel)  # Trouve le répertoire racine du projet
-
+    #currentpwd permets de récupérer le répertoire où se trouve l'utilisateur
+    currentdir=$(pwd)
+    #Trouve le répertoire racine du projet
+    projectroot=$(git rev-parse --show-toplevel)
+    #Cette boucle permet d'ajouter ../ à chaque fois qu'on retourne en arrière
     while [ "$currentdir" != "$projectroot" ]; do
+        #ajoute ../ devant
         depth="../$depth"
+        #dirname permets de récupérer le nom du repo
         currentdir=$(dirname "$currentdir")
     done
 
+    #Récupére l'année
     year=$(date +%Y)
+    #Ajoute les Epi Header dans le fichier
     echo "$inclusion_s" > $basepwd/"$filename$extension"
     echo "$inclusion_i EPITECH PROJECT, $year" >> $basepwd/"$filename$extension"
     echo "$inclusion_i $dirname" >> $basepwd/"$filename$extension"
@@ -68,35 +95,10 @@ add_header() {
     echo "$inclusion_i $filename$extension" >> $basepwd/"$filename$extension"
     echo "$inclusion_e" >> $basepwd/"$filename$extension"
 }
-
+#Permet de récuperer les fichiers à partir d'un chemin et du fichier désiré
 search_file() {
     local path=$1
     local files=$2
 
     echo "$(find $path -type f -name "*$files")"
 }
-
-# detect_multiple_file() {
-#     local files_search=$1
-#     selected_files=()
-#     files=()
-#     array_file=$(search_file "." $files_search)
-
-#     for file in $array_file; do
-#         if [ $file != "./Makefile" ]; then
-#             files+=" $file"
-#         fi
-#     done
-#     files=("" ${files[@]})
-#     if [ "${#files[@]}" -gt 1 ]; then
-#         for index in "${!files[@]}"; do
-#             echo "$index: ${files[$index]}"
-#         done
-#         echo "Entrez les numéros des $files_search que vous souhaitez utiliser, séparés par des espaces:"
-#         read -a selected_indices
-#         for index in "${selected_indices[@]}"; do
-#             selected_files+=("${files[$index]}")
-#         done
-#     fi
-#     echo "${selected_files[@]}"
-# }
