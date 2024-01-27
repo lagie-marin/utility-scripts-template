@@ -1,7 +1,21 @@
 #!/bin/bash
 
 # Nom du fichier de paramètres
-SETTINGS_FILE="settings.ptr"
+SETTINGS_FILE="config.ptr"
+LOCAL_FOLDER="/usr/local/bin/"
+SETTINGS="$LOCAL_FOLDER/config.ptr"
+
+#Vérifie si le fichier n'existe pas
+if [ ! -f "$SETTINGS_FILE" ]; then
+    #Vérifie si le fichier getlib existe
+    if [ -f "$LOCAL_FOLDER/getlib" ]
+        echo "LIB=true" >> $SETTINGS
+    else
+        echo "LIB=false" >> $SETTINGS
+    echo "COLOR_CODE=\'\o033[38;5;214m\'" >> $SETTINGS
+    echo "COLOR_COM_I=\'\e[32m\'" >> $SETTINGS
+    echo "COLOR_COM=\'\o033[32m\'" >> $SETTINGS
+    echo "EPI_HEADER=\"\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n\"" >> $SETTINGS
 
 # Vérifie si un argument a été fourni
 if [ -z "$1" ]; then
