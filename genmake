@@ -10,99 +10,157 @@ makefile_name="Makefile"
 binary_name="bin_name"
 selected_makefiles=()
 force=false
-update=false
 
+#display_usage permets d'afficher les usages de la commande
 display_usage() {
-    echo "Usage: $0 [-d] [-f folderpath] [-i ignore_folder]"
+    echo "Usage: $0 [-d] [-n name] [-l] [-force] [-f folderpath] [-i ignore_folder]"
 }
 
 generate_makefile() {
+    #Initialisation des variables pour le bon fonctionnement de la génération
+    #count permets de savoir à quelle tour de boucle on est
     count=0
-    basepwd=$(pwd)
+    #currentpwd permets de récupérer le répertoire où se trouve l'utilisateur afin par la suite
+    #de trouver le fichier .git
     currentpwd=$(pwd)
+    #dirname permets de récupérer le nom du repo
     dirname="Unknown"
-
+    #Cette boucle permets de récupérer le nom du repo
     while [ "$currentpwd" != "/" ]; do
+        #Cette condition permets de vérifier s'il y a le dossier .git qui se trouve dans le dossier
+        #afin de récupérer le nom du repo de l'utilisateur
         if [ -d "$currentpwd/.git" ]; then
+            #Si dossier .git existe il va récupérer le nom du repo
+            #Plusieurs commandes sont utilisé:
+            #git config --get remote.origin.url
+            #   Permets de récupérer l'URL du repo git distant qui est appelé "origin"
+            #sed 's/.*\///'
+            #   sed est un éditeur de flus pour modifier l'URL récupérée. l'expression régulière 's/.*\///'
+            #   supprime tout ce qui précède le dernier /. Cela a pour effet de ne conserver que le nom du repo
+            #   dans l'URL
+            #sed 's/\.git//'
+            #   Permets de supprimer l'extension .git du nom du repo
             dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
             break
         fi
+        #dirname $currentpwd
+        #   renvoie le chemin du répertoire parent de la valeur contenue dans la variable currentpwd
+        #   Par exemple:
+        #       dirname /home/marinlagie/epitech/project/utility-scripts-template
+        #       renvoie: /home/marinlagie/epitech/project
         currentpwd=$(dirname $currentpwd)
     done
+    #Permets de récupérer l'année actuelle
     year=$(date +%Y)
-    if [ -f "$makefile_name" ]; then
-        #Récupére le numéro de la ligne qui contient "SRC ="
-        src_line=$(grep -n "^SRC =" $makefile_name | cut -d: -f1)
-        #Supprime la ligne "SRC ="
-        sed -i '/^SRC =/,/^[^\t]/d' $makefile_name
-        #Ajoute une nouvelle ligne "SRC ="
-        for file in $files; do
-            if [ $count -eq 0 ]; then
-                sed -i "${src_line}iSRC = $file \\\\" $makefile_name
-            else
-                sed -i "${src_line}a\\\t$file \\\\" $makefile_name
-                src_line=$((src_line+1))
-            fi
-            count=$((count+1))
-        done
-        # sed -i "${src_line}a\\\\" $makefile_name
-        # echo "" >> $makefile_name
-    else
-        echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
-        for file in $files; do
-            if [ $count -eq 0 ]; then
-                echo "SRC = $file \\" >> $makefile_name
-            else
-                echo -e "\t$file \\" >> $makefile_name
-            fi
-            count=$((count+1))
-        done
-        echo "" >> $makefile_name
-        echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
-        echo "CFLAGS = -g3 -Wall -Wextra" >> $makefile_name
-        if [ "$lib" == true ]; then
-            echo "NAME = $binary_name.a" >> $makefile_name
+    #Ajoute le Epi header au Makefile, il ajoute l'année, le nom du repo et le nom du fichier qui est Makefile
+    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
+    #Cette boucle permets de récupérer un par un les fichiers qui se trouve dans la variable files
+    for file in $files; do
+        #On vérifie que count est égale à 0, si c'est le cas on va ajouter la ligne SRC = avec
+        #le chemin relatif du chemin
+        #-eq est un opérateur logique qui signifie "égal à" et renvoie 0 ou 1
+        if [ $count -eq 0 ]; then
+            #Ajout la ligne SRC = avec le chemin relatif du premier fichier dans le Makefile
+            echo "SRC = $file \\" >> $makefile_name
         else
-            echo "NAME = $binary_name" >> $makefile_name
+            #Ajout des autres lignes des fichiers après le SRC et commence par un tab
+            echo -e "\t$file \\" >> $makefile_name
         fi
-        echo "all: \$(NAME)" >> $makefile_name
-        echo "" >> $makefile_name
-        echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
-        if [ "$lib" == true ]; then
-            if [ "$force" == true ]; then
-                for make in $selected_makefiles; do
-                    echo -e "\tmake -C $make re" >> $makefile_name
-                done
-            fi
-            echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
-        else
+        #Incrémente count de 1
+        count=$((count+1))
+    done
+    #Ajoute un espace après avoir ajouté tous les SRC dans le Makefile
+    echo "" >> $makefile_name
+    #Ajoute la compilation des objets dans le Makefile
+    echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
+    #Ajoute les CFLAGS important
+    #-g3 permets de compiler avec valgrind pour les différentes erreurs que vous pouvez rencontrer
+    #-Wall -Wextra permets de récupérer les différentes erreurs lors de la compilation avec le Makefile
+    echo "CFLAGS = -g3 -Wall -Wextra" >> $makefile_name
+    #Cette condition permet de vérifier si on veut générer un Makefile pour une lib
+    if [ "$lib" == true ]; then
+        #Ajoute le nom du binaire avec un .a après le nom du fichier afin d'informer que c'est une lib
+        #dans le Makefile
+        echo "NAME = $binary_name.a" >> $makefile_name
+    else
+        #Ajoute le nom du binaire dans le Makefile
+        echo "NAME = $binary_name" >> $makefile_name
+    fi
+    #Ajoute la règle all qui appelle la règle NAME
+    echo "all: \$(NAME)" >> $makefile_name
+    #Ajoute une ligne vide
+    echo "" >> $makefile_name
+    #Ajoute la règle NAME elle permet de compiler l'ensemble des fichiers en un fichier
+    echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
+    #Vérifie si le Makefile est pour une lib
+    if [ "$lib" == true ]; then
+        #Si on utilise la paramètre -force sa permets d'appeler un autre Makefile lorsque
+        #le Makefile est pour une lib
+        if [ "$force" == true ]; then
+            #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
             for make in $selected_makefiles; do
+                #Ajoute les Makefile dans le fichier Makefile
                 echo -e "\tmake -C $make re" >> $makefile_name
             done
-            echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
         fi
-        echo -e "\nclean:" >> $makefile_name
+        #Ajoute la commande de compilation dans le Makefile pour compiler une lib
+        echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+    else
+        #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
         for make in $selected_makefiles; do
-            echo -e "\tmake -C $make clean" >> $makefile_name
+            #Ajoute les Makefile avec l'appel de re dans le fichier Makefile
+            echo -e "\tmake -C $make re" >> $makefile_name
         done
-        echo -e "\trm -f \${OBJ}" >> $makefile_name
-        echo -e "fclean: clean" >> $makefile_name
-        for make in $selected_makefiles; do
-            echo -e "\tmake -C $make fclean" >> $makefile_name
-        done
-        echo -e "\trm -f \${NAME}" >> $makefile_name
-        echo -e "re: fclean all" >> $makefile_name
+        #Ajoute la commande de compilation dans le Makefile pour lier les fichiers source
+        #en executable
+        echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
     fi
+    #Ajoute la règle clean
+    echo -e "\nclean:" >> $makefile_name
+    #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
+    for make in $selected_makefiles; do
+        #Ajoute les Makefile avec l'appel de clean dans le fichier Makefile
+        echo -e "\tmake -C $make clean" >> $makefile_name
+    done
+    #Ajoute la commande qui permets de supprimer l'ensemble des fichiers .o
+    echo -e "\trm -f \${OBJ}" >> $makefile_name
+    #Ajoute la règle fclean, elle appelle la régle clean avant de faire ses actions
+    echo -e "fclean: clean" >> $makefile_name
+    #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
+    for make in $selected_makefiles; do
+        #Ajoute les Makefile avec l'appel de fclean dans le fichier Makefile
+        echo -e "\tmake -C $make fclean" >> $makefile_name
+    done
+    #Ajoute la commande qui permets de supprimer le fichier qui se trouve dans NAME
+    echo -e "\trm -f \${NAME}" >> $makefile_name
+    #Ajoute la règle re qui appelle fclean et all
+    echo -e "re: fclean all" >> $makefile_name
 }
-
+#Cette boucle permet de parcourir les paramètres donnés en argument
+#$#
+#   est une variable spéciale qui contient le nombre d'arguments passés au script
+#-gt
+#   est un opérateur de comparaison numérique qui signifie "supérieur à"
+#donc $# -gt 0 vérifie si le nombre d'arguments est supérieur à 0
 while [[ $# -gt 0 ]]; do
+    #vérifie les différents cas de paramètre
+    #-d: permets d'ignorer la mises à jour des scripts
+    #-l: permets de configurer le générateur pour générer un Makefile pour une lib
+    #-f: permets d'ajouter un dossier spécifique pour aller chercher les différents fichiers c
+    #-i: permets d'ignorer plusieurs dossiers. Les fichiers dans les dossiers ignorés ne seront
+    #   pas ajoutés dans le Makefile
+    #-n: permets de données un nom au fichier binaire après l'exécution du Makefile
+    #-force: permets de forcer l'ajout d'appelle de Makefile lorsqu'on veux générer un Makefile
+    #   pour une lib
     case $1 in
         -l*)
             lib=true
             ;;
         -f)
+            #Récupère le dossier à pointer
             if [[ -n $2 && $2 != -* ]]; then
                 folder_path="$2"
+                #Permets de décaler les paramètres de position
                 shift
             else
                 echo "Erreur: L'option -f nécessite un paramètre."
@@ -110,7 +168,10 @@ while [[ $# -gt 0 ]]; do
             fi
             ;;
         -i)
-            while [[ -n $2 && $2 != -* ]]; do
+            #Permets de générer une expression régulière pour les fichiers ignorés
+            while [[ -n $2 && $2 != -* ]]; do #Permets de vérifier que la 2ème variable ne commence pas par un -
+                #Vérifie que la variable ignore_folders est vide
+                #"${#ignore_folders[@]}": est une expression qui donne le nombre d'éléments dans le tableau ignore_folders
                 if [ "${#ignore_folders[@]}" == 0 ]; then
                     ignore_folders+=$2
                 else
@@ -124,9 +185,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         -force)
             force=true
-            ;;
-        -u)
-            update=true
             ;;
         -*)
             for ((i=1; i<${#1}; i++)); do
@@ -150,33 +208,55 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
-
+#Si call_script_manager est vrai il appelle la commande script-manager qui va mettre
+#à jour les différents scripts
 if $call_script_manager; then
     script-manager
 fi
+#Vérifie qu'il n'y a pas de dossier ignorer
+#-z: est un opérateur de test qui renvoie vrai si la longueur de la chaine est 0
 if [[ -z "$ignore_folders" ]]; then
+    #Recherche tous les fichiers qui se termine par .c
     files=$(find $folder_path -type f -name "*.c")
 else
+    #Recherche tous les fichiers qui se termine par .c et supprime les fichiers qui
+    #supprime les fichiers qui se trouvent dans les dossiers ignorer
+    #-v: inverse la correspondance
+    #-E: permets l'utilisation d'expression régulière.
     files=$(find $folder_path -type f -name "*.c" | grep -vE "($ignore_folders)")
 fi
+#Vérifie que lib est false ou que force est vraie
 if [ "$lib" != true ] || [ "$force" == true ]; then
+    #Parcours tous les Makefiles qui se trouve dans le repo
     for make in $(find . -type f -name "*Makefile"); do
+        #Si le makefile est celui qui se trouve dans le dossier où se trouve l'utilisateur
+        #il l'ignore et ne l'ajoute pas dans la liste
         if [ $make != "./Makefile" ]; then
+            #Ajoute le Makefile dans la liste
+            #cut -c 3-: permets de supprimer les 2 1er caractères
             makefiles+="$(echo $make | cut -c 3-)"
         fi
     done
-    makefiles=("" ${makefiles[@]})
+    #Vérifie si dans la liste makefiles n'est pas vide
+    #"${#makefiles[@]}": est une expression qui donne le nombre d'éléments dans le tableau makefiles
+    #-gt: est un opérateur de comparaison numérique qui signifie "supérieur à"
     if [ "${#makefiles[@]}" -gt 1 ]; then
+        #Permets de parcourir la liste makefiles.
+        #${!makefiles[@]}: permets de renvoyer les indices du tableau
         for index in "${!makefiles[@]}"; do
+            #affiche dans le terminal les choix possibles des différents makefiles
             echo "$index: ${makefiles[$index]}"
         done
         echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
+        #Attends le résultat de l'utilisateur
         read -a selected_indices
+        #Parcours les indices donnés par l'utilisateur
         for index in "${selected_indices[@]}"; do
+            #Ajoute les makefiles choisis par l'utilisateur dans une liste
             selected_makefiles+=("${makefiles[$index]//Makefile/}")
         done
     fi
 fi
-echo $files
+#Appel la fonction qui se trouve ci-dessus
 generate_makefile
 echo "Makefile generated: $makefile_name"
