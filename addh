@@ -2,60 +2,56 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+source func
+
 filename=""
+#Vérifie s'il n'y a pas le -d
 if [ "$1" != "-d" ]
 then
     script-manager
 fi
+# Vérifie le nombre d'arguments
 if (( $# < 1 )) || (( $# > 2 )); then
     echo "Usage: ./addh [-d] [file_name]"
     exit 84
 fi
-
+#Parcour les arguments
 for arg in "$@"
 do
+    #Vérifie que l'argument ne commence pas par un -
     if [[ $arg != -* ]]; then
         filename=$arg
         break
     fi
 done
 
+# Vérifie si le fichier existe déjà donne une erreur si c'est le cas
 if [ -f "$filename.h" ]; then
     echo "Error: File $filename.h already exists"
     exit 84
 fi
 
+# Crée le fichier avec le nom donné en argument
 touch "$filename.h"
 if (( $? != 0 )); then
     echo "Error: Can't create file $filename.h"
     exit 84
 fi
 
-basepwd=$(pwd)
-currentpwd=$(pwd)
-dirname="Unknown"
+# Ajoute le Epi header de Epitech
+#add_header filename type
+add_header $filename "h"
 
-while [ "$currentpwd" != "/" ]; do
-    if [ -d "$currentpwd/.git" ]; then
-    dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
-    break
-    fi
-    currentpwd=$(dirname $currentpwd)
-done
-
-year=$(date +%Y)
-echo "/*
-** EPITECH PROJECT, $year
-** $dirname
-** File description:
-** $filename.h
-*/" > $basepwd/"$filename.h"
-
+#Mets le nom du fichier en Majuscule
 filename_upper=$(echo "$filename" | tr '[:lower:]' '[:upper:]')
+#Ajoute le ifndef, ect
 echo -e "#ifndef $filename_upper"_H"\n    #define $filename_upper"_H"\n#endif" >> "$basepwd/$filename.h"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
+#Indique à l'utilisateur que le fichier a bien été créé
 echo -e "${G}file $filename.h has been created${NC}"
+#Lance vscode
 code $filename.h
+#Indique à l'utilisateur que le fichier est entrain d'être charger
 echo -e "${RED}Loading resources...${NC}"
