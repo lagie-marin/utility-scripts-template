@@ -2,6 +2,8 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+#Rend utilisable les commandes dans func dans se fichier
+#Pour l'image c'est le même principe que le include en c
 source func
 
 filename=""
