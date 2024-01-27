@@ -1,1 +1,1 @@
-settings.ptr get_settings script-manager getlib addc addh adds addt push csr translate_csr cl genmake help_emacs help_cmd func
+get_settings script-manager getlib addc addh adds addt push csr translate_csr cl genmake help_emacs help_cmd func

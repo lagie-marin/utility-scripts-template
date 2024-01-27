@@ -1,0 +1,187 @@
+#!/bin/sh
+
+folder_path="."
+files=""
+makefiles=()
+ignore_folders=()
+call_script_manager=true
+lib=false
+makefile_name="Makefile"
+binary_name="bin_name"
+selected_makefiles=()
+force=false
+update=false
+
+display_usage() {
+    echo "Usage: $0 [-d] [-f folderpath] [-i ignore_folder]"
+}
+
+generate_makefile() {
+    count=0
+    basepwd=$(pwd)
+    currentpwd=$(pwd)
+    dirname="Unknown"
+
+    while [ "$currentpwd" != "/" ]; do
+        if [ -d "$currentpwd/.git" ]; then
+            dirname=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
+            break
+        fi
+        currentpwd=$(dirname $currentpwd)
+    done
+    year=$(date +%Y)
+    # if [ -f "$makefile_name" ]; then
+    #     #Récupére le numéro de la ligne qui contient "SRC ="
+    #     src_line=$(grep -n "^SRC =" $makefile_name | cut -d: -f1)
+    #     #Récupére le numéro de la ligne qui contient "OBJ ="
+    #     obj_line=$(grep -n "^OBJ =" $makefile_name | cut -d: -f1)
+    #     #Supprime la ligne "SRC ="
+    #     # sed -i '/^SRC =/,/^[^\t]/d' $makefile_name
+    #     # sed -i '/^SRC =/,/^OBJ/d' $makefile_name
+    #     # Supprime toutes les lignes entre "SRC =" et "OBJ"
+    # sed -i "${src_line},$(($obj_line - 1))d" $makefile_name
+    #     #Ajoute une nouvelle ligne "SRC ="
+    #     for file in $files; do
+    #         if [ $count -eq 0 ]; then
+    #             sed -i "${src_line}iSRC = $file \\\\" $makefile_name
+    #         else
+    #             sed -i "${src_line}a\\\t$file \\\\" $makefile_name
+    #             src_line=$((src_line+1))
+    #         fi
+    #         count=$((count+1))
+    #     done
+    #     # sed -i "${src_line}a\\\\" $makefile_name
+    #     # echo "" >> $makefile_name
+    # else
+    # fi
+    echo -e "##\n## EPITECH PROJECT, $year\n## $dirname\n## File description:\n## $makefile_name\n##\n" > $makefile_name
+    for file in $files; do
+        if [ $count -eq 0 ]; then
+            echo "SRC = $file \\" >> $makefile_name
+        else
+            echo -e "\t$file \\" >> $makefile_name
+        fi
+        count=$((count+1))
+    done
+    echo "" >> $makefile_name
+    echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
+    echo "CFLAGS = -g3 -Wall -Wextra" >> $makefile_name
+    if [ "$lib" == true ]; then
+        echo "NAME = $binary_name.a" >> $makefile_name
+    else
+        echo "NAME = $binary_name" >> $makefile_name
+    fi
+    echo "all: \$(NAME)" >> $makefile_name
+    echo "" >> $makefile_name
+    echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
+    if [ "$lib" == true ]; then
+        if [ "$force" == true ]; then
+            for make in $selected_makefiles; do
+                echo -e "\tmake -C $make re" >> $makefile_name
+            done
+        fi
+        echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+    else
+        for make in $selected_makefiles; do
+            echo -e "\tmake -C $make re" >> $makefile_name
+        done
+        echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
+    fi
+    echo -e "\nclean:" >> $makefile_name
+    for make in $selected_makefiles; do
+        echo -e "\tmake -C $make clean" >> $makefile_name
+    done
+    echo -e "\trm -f \${OBJ}" >> $makefile_name
+    echo -e "fclean: clean" >> $makefile_name
+    for make in $selected_makefiles; do
+        echo -e "\tmake -C $make fclean" >> $makefile_name
+    done
+    echo -e "\trm -f \${NAME}" >> $makefile_name
+    echo -e "re: fclean all" >> $makefile_name
+}
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -l*)
+            lib=true
+            ;;
+        -f)
+            if [[ -n $2 && $2 != -* ]]; then
+                folder_path="$2"
+                shift
+            else
+                echo "Erreur: L'option -f nécessite un paramètre."
+                exit 1
+            fi
+            ;;
+        -i)
+            while [[ -n $2 && $2 != -* ]]; do
+                if [ "${#ignore_folders[@]}" == 0 ]; then
+                    ignore_folders+=$2
+                else
+                    ignore_folders+="|$2"
+                fi
+                shift
+            done
+            ;;
+        -n)
+            binary_name=$2
+            ;;
+        -force)
+            force=true
+            ;;
+        -u)
+            update=true
+            ;;
+        -*)
+            for ((i=1; i<${#1}; i++)); do
+                case ${1:$i:1} in
+                    l)
+                        lib=true
+                        ;;
+                    d)
+                        call_script_manager=false
+                        ;;
+                    f)
+                        echo "f: $1"
+                        ;;
+                    *)
+                        echo "Erreur: Option inconnue: ${1:$i:1}"
+                        exit 1
+                        ;;
+                esac
+            done
+            ;;
+    esac
+    shift
+done
+
+if $call_script_manager; then
+    script-manager
+fi
+if [[ -z "$ignore_folders" ]]; then
+    files=$(find $folder_path -type f -name "*.c")
+else
+    files=$(find $folder_path -type f -name "*.c" | grep -vE "($ignore_folders)")
+fi
+if [ "$lib" != true ] || [ "$force" == true ]; then
+    for make in $(find . -type f -name "*Makefile"); do
+        if [ $make != "./Makefile" ]; then
+            makefiles+="$(echo $make | cut -c 3-)"
+        fi
+    done
+    makefiles=("" ${makefiles[@]})
+    if [ "${#makefiles[@]}" -gt 1 ]; then
+        for index in "${!makefiles[@]}"; do
+            echo "$index: ${makefiles[$index]}"
+        done
+        echo "Entrez les numéros des makefiles que vous souhaitez utiliser, séparés par des espaces:"
+        read -a selected_indices
+        for index in "${selected_indices[@]}"; do
+            selected_makefiles+=("${makefiles[$index]//Makefile/}")
+        done
+    fi
+fi
+echo $files
+generate_makefile
+echo "Makefile generated: $makefile_name"
