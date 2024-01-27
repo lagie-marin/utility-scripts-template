@@ -1,5 +1,0 @@
-LIB=false
-COLOR_CODE='\o033[38;5;214m'
-COLOR_COM_I='\e[32m'
-COLOR_COM='\o033[32m'
-EPI_HEADER="$inclusion_s\n$inclusion_i EPITECH PROJECT, $year\n$inclusion_i $dirname\n$inclusion_i File description:\n$inclusion_i $filename$extension\n$inclusion_e\n"
