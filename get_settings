@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Nom du fichier de paramètres
+SETTINGS_FILE="settings.ptr"
+
+# Vérifie si un argument a été fourni
+if [ -z "$1" ]; then
+    echo "Erreur: Aucune clé spécifiée."
+    exit 1
+fi
+
+# Recherche la clé dans le fichier de paramètres
+LINE=$(grep "^$1=" $SETTINGS_FILE)
+
+# Vérifie si la clé a été trouvée
+if [ -z "$LINE" ]; then
+    echo "Erreur: Clé non trouvée."
+    exit 1
+fi
+
+# Récupère la valeur après le signe égal
+VALUE=$(echo $LINE | cut -d '=' -f 2-)
+
+# Affiche la valeur
+echo $VALUE
