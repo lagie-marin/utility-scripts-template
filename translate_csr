@@ -1,4 +1,5 @@
 #!/bin/sh
+#Vérifie s'il n'y a pas le -d
 if [ "$1" != "-d" ]; then
     script-manager
 fi
@@ -11,10 +12,26 @@ NC='\033[0m'
 RED='\e[1;31m'
 PINK='\e[38;5;205m'
 
+#Permets de vérifier si le fichier existe
+#-e: vérifie si le fichier ou le répertoire existe
 if [ -e "./coding-style-reports.log" ]; then
+    #Permets de lire le fichier ligne par ligne
+    #IFS=:  vous empêchez le script de diviser les lignes en champs. Cela est
+    #   utile si vos lignes contiennent des espaces que vous voulez conserver.
+    #read -r ligne: Permets de lire une ligne du fichier
+    #-r: empêche read d'interpréter les caractères d'échappement
+    #ligne: est la variable où sera stockée la ligne lue
     while IFS= read -r ligne; do
+        #Permets de récupérer les 4 derniers caractères de la ligne
         dernier_caractere="${ligne: -4}"
+        #Permet d'afficher la ligne avec le nom de l'erreur en rouge
+        #NC permet de réinitialiser la couleur et RED permet de colorer le texte qui suit
+        #en rouge.
+        #-n: Permets d'empêcher le saut de ligne à la fin de l'output
+        #-e: Permets d'interpréter les caractères d'échappement
         echo -ne "${NC}$ligne ${RED}"
+        #Vérifie si le dernier caractère est égal à C-O1
+        #Cette vérification est utilisée dans les lignes ci-dessous
         if [ "$dernier_caractere" = "C-O1" ]; then
             echo "Contents of the repository"
         elif [ "$dernier_caractere" = "C-O2" ]; then
@@ -41,7 +58,7 @@ if [ -e "./coding-style-reports.log" ]; then
             echo "Leading/Trailing lines"
         elif [ "$dernier_caractere" = "C-G9" ]; then
             echo "Constant values"
-        elif [ "$dernier_caractere" = "C-G10" ]; then
+        elif [ "${ligne: -5}" = "C-G10" ]; then
             echo "Inline assembly"
         elif [ "$dernier_caractere" = "C-F1" ]; then
             echo "Coherence of functions"
@@ -99,17 +116,35 @@ if [ -e "./coding-style-reports.log" ]; then
             echo "Line break at the end of file"
         elif [ "$dernier_caractere" = "C-A4" ]; then
             echo "Static"
+
         fi
+    #Permets de terminer une boucle while qui lit un fichier ligne par ligne.
+    # < est un opérateur de redirection d'entrée en shell il prend le fichier
+    #spécifié (./coding-style-reports.log) et le passe comme entrée à la boucle while
     done < ./coding-style-reports.log
+    #Permets de réinitialiser la couleur
     echo -e "${NC}"
 fi
+#Cette partie permet de récupérer la documentation du coding-style.
+#-e: Permets de dire au script qu'on veux la documentation de 1 ou plusieurs
+#erreur de coding-style
+#Par exemple
+#translate_csr -d -e C-G5 C-A1
+#Il va me donner la documentation des 2 erreurs.
 error_info=()
-while getopts ":e:" opt; do
+#Permets de récupérer les options donner en argument
+while getopts "e:" opt; do
     case $opt in
         e)
+            #shift $((OPTIND-2)): Permets de déplacer les arguments de position
             shift $((OPTIND-2))
+            #Cette boucle itère sur chaque argument de ligne de commande
+            #$@: est une variable spéciale qui contient tous les arguments de ligne
+            #   de commande
             for error in "$@"; do
+                #Vérifie que l'argument actuel ne contient pas de -
                 if [[ "$error" != -* ]]; then
+                    #Ajoute l'erreur dans la liste
                     error_info+=("$error")
                 else
                     break
@@ -117,43 +152,71 @@ while getopts ":e:" opt; do
             done
     esac
 done
-
+#word_colorize est une expression régulière qui vérifie que le mot est égale
+#à l'un des mots qui se trouvent dans c'elle-si
 word_colorize="#ifndef|#else|defined|#endif|#error|if|else|int|char|while|for|const|unsigned|typedef|struct|enum|define|return|long|short|void|sizeof|break"
+#title est une fonction qui permet d'écrire en rouge et en bold
 title() {
     echo -e "${RED}$1${NC}"
 }
+#bold est une fonction qui met le texte en bold
 bold() {
     echo -e "${BOLD}$1${NC}"
 }
+#color est une fonction que mets le texte en couleurs s'ils font partie de word_colorize
 color() {
+    #Cette ligne permet de colorer en OR les mots qui font partie de word_colorize
+    #-E: Permets à sed d'utiliser des expressions régulières étendues
+    #s: C'est la commande de substitution de sed
+    #\b: C'est un mot frontière. Il correspond à la position où un mot commence ou se termine.
+    #s/\b((#|\t)$word_colorize|($word_colorize): C'est le motif recherché, il vérifie que le mot commence
+    #   par # où par un tab où fais alors partie d'un des mots qui se trouve dans le word_colorize sans # ou tab
     val=$(echo "$1" | sed -E "s/\b((#|\t)$word_colorize|($word_colorize))/${OR}\1\o033[0m/g")
+    #(\/\*)([^*]|(\*[^\/])|[*][^\/])*\*\/: C'est le motif recherché. Il correspond à un commentaire multiligne
+    #   en C ou C++. Il commence par /* et se termine par */. Entre les deux, il peut y avoir n'importe quel
+    #   caractère qui n'est pas une étoile ([^*]), ou une étoile suivie d'un caractère qui n'est pas une barre
+    #   oblique (\*[^/]), ou une étoile suivie d'un caractère qui n'est pas une barre oblique (*[^/]).
     val=$(echo "$val" | sed -E "s/(\/\*)([^*]|(\*[^\/])|[*][^\/])*\*\//${GREEN_AUTO}&\o033[0m/g")
+    #((\/\/)|(\#\#))([^*]+) : C'est le motif recherché. Il correspond à une ligne qui commence par // ou ##,
+    #   suivie par un ou plusieurs caractères qui ne sont pas une étoile ([^*]+).
+    #g: C'est un drapeau qui indique à sed de remplacer toutes les occurrences du motif dans chaque ligne (pas
+    #   seulement la première).
     val=$(echo "$val" | sed -E "s/((\/\/)|(\#\#))([^*]+)/${GREEN_AUTO}&\o033[0m/g")
     echo -e "\t$val"
 }
 warn() {
+    #Appelle la fonction color est ajoute un tab devant la chaine de caractère envoyer en argument
     color "\t$1"
 }
 line() {
+    #Appelle la fonction color avec la chaine de caractère envoyer en argument
     color "$1"
 }
 
 pink() {
+    #Affiche la chaine de caractère en PINK
     echo -e "${PINK}$1${NC}"
 }
 pts() {
+    #Affiche un • en bold avec la chaine de caractère juste derrière
     echo -e "\t   $(bold •)$1"
 }
 ok() {
+    #Affiche OK en vers
     echo -e "\t${GREEN}// OK${NC}"
 }
 incorrect() {
+    #Affiche incorrect en vers
     echo -e "\t${GREEN}// incorrect${NC}"
 }
 italic() {
+    #Affiche le texte en italique donné en argument
     echo -e "${ITALIQUE}$1${NC}"
 }
+#Parcours la liste qui contient les erreurs pour avoir leur documentation
 for error in "${error_info[@]}"; do
+    #Vérifie si error contient C-O1, si c'est le cas il affiche le titre et les
+    #différentes informations. Cette condition est utilisée tout le temps ci dessous
     if [ "$error" = "C-O1" ]; then
         title "C-O1 - Contents Of The Repository"
         line "The Repository $(bold "must not") contain $(bold "compiled") (.o, .a, .so, ...), $(bold "temporary")"
