@@ -8,7 +8,7 @@ SETTINGS="$LOCAL_FOLDER/config.ptr"
 #Vérifie si le fichier n'existe pas
 if [ ! -f "$SETTINGS_FILE" ]; then
     #Vérifie si le fichier getlib existe
-    if [ -f "$LOCAL_FOLDER/getlib" ]
+    if [ -f "$LOCAL_FOLDER/getlib" ]; then
         echo "LIB=true" >> $SETTINGS
     else
         echo "LIB=false" >> $SETTINGS
