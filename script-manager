@@ -71,9 +71,12 @@ for script in "${SCRIPTS[@]}"; do
         #dans la variable local_version
         local_version=$(cat "$LOCAL_FOLDER/$script")
     else
-        #cette commande télécharge le fichier à l'URL spécifiée par $REPO_URL/$script et le
-        #sauvegarde à l'emplacement spécifié par $LOCAL_FOLDER/$script.
-        sudo curl -L "$REPO_URL/$script" -o "$LOCAL_FOLDER/$script"
+        #wget est un outil en ligne de commande pour télécharger des fichiers depuis le web.
+        #-q rend wget silencieux, sauf lors de l'affichage des erreurs.
+        #--show-progress force wget à afficher la progression du téléchargement même en mode silencieux.
+        #-O spécifie le fichier de sortie, ici $DEST_FOLDER/$script. Enfin, $REPO_URL/$script est l'URL
+        #du fichier à télécharger.
+        sudo wget -q --show-progress -O "$REPO_URL/$script" "$DEST_FOLDER/$script"
         #En résumé, cette commande rend le fichier spécifié par $LOCAL_FOLDER/$script exécutable.
         sudo chmod +x "$LOCAL_FOLDER/$script"
         #Informe à l'utilisateur que le fichier a bien été téléchargé
@@ -102,9 +105,12 @@ for script in "${SCRIPTS[@]}"; do
     #Vérifie que la version local est différente de c'elle de github si c'est le cas il va mettre
     #à jour le script en question
     if [[ "$local_version" != "$github_version" ]]; then
-        #-o permet de spécifier le nom du fichier de sortie. $DEST_FOLDER/$script est le chemin où
-        #le fichier téléchargé sera sauvegardé.
-        sudo curl -L "$REPO_URL/$script" -o "$DEST_FOLDER/$script"
+        #wget est un outil en ligne de commande pour télécharger des fichiers depuis le web.
+        #-q rend wget silencieux, sauf lors de l'affichage des erreurs.
+        #--show-progress force wget à afficher la progression du téléchargement même en mode silencieux.
+        #-O spécifie le fichier de sortie, ici $DEST_FOLDER/$script. Enfin, $REPO_URL/$script est l'URL
+        #du fichier à télécharger.
+        sudo wget -q --show-progress -O "$REPO_URL/$script" "$DEST_FOLDER/$script"
         # écrit la valeur de github_version dans le fichier spécifié par "$LOCAL_FOLDER/$script",
         #sans afficher cette valeur dans la console.
         #tee est une commande Unix qui lit de l'entrée standard et écrit à la fois dans l'entrée
