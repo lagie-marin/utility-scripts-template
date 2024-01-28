@@ -17,7 +17,7 @@ if [ ! -f "$SETTINGS_FILE" ]; then
     echo "COLOR_COM_I=\'\e[32m\'" >> $SETTINGS
     echo "COLOR_COM=\'\o033[32m\'" >> $SETTINGS
     echo "EPI_HEADER=\"\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n\"" >> $SETTINGS
-
+fi
 # Vérifie si un argument a été fourni
 if [ -z "$1" ]; then
     echo "Erreur: Aucune clé spécifiée."
