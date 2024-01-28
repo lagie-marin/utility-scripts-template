@@ -4,17 +4,17 @@ if [ "$1" != "-d" ]; then
     script-manager
 fi
 ITALIQUE='\e[3m'
-GREEN_AUTO='\o033[32m'
-GREEN='\e[32m'
+GREEN_AUTO=$(get_config COLOR_COM)
+GREEN=$(get_config COLOR_COM_I)
 BOLD='\e[1m'
-OR='\o033[38;5;214m'
+OR=$(get_config COLOR_CODE)
 NC='\033[0m'
 RED='\e[1;31m'
 PINK='\e[38;5;205m'
 
 #Permets de vérifier si le fichier existe
 #-e: vérifie si le fichier ou le répertoire existe
-if [ -e "./coding-style-reports.log" ]; then
+if [ -e "$(get_config CODING_STYLE)" ]; then
     #Permets de lire le fichier ligne par ligne
     #IFS=:  vous empêchez le script de diviser les lignes en champs. Cela est
     #   utile si vos lignes contiennent des espaces que vous voulez conserver.
@@ -120,8 +120,8 @@ if [ -e "./coding-style-reports.log" ]; then
         fi
     #Permets de terminer une boucle while qui lit un fichier ligne par ligne.
     # < est un opérateur de redirection d'entrée en shell il prend le fichier
-    #spécifié (./coding-style-reports.log) et le passe comme entrée à la boucle while
-    done < ./coding-style-reports.log
+    #spécifié dans le fichier de configuration et le passe comme entrée à la boucle while
+    done < $(get_config CODING_STYLE)
     #Permets de réinitialiser la couleur
     echo -e "${NC}"
 fi

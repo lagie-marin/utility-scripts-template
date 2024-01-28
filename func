@@ -88,12 +88,13 @@ add_header() {
     #Récupére l'année
     year=$(date +%Y)
     #Ajoute les Epi Header dans le fichier
-    echo "$inclusion_s" > $basepwd/"$filename$extension"
-    echo "$inclusion_i EPITECH PROJECT, $year" >> $basepwd/"$filename$extension"
-    echo "$inclusion_i $dirname" >> $basepwd/"$filename$extension"
-    echo "$inclusion_i File description:" >> $basepwd/"$filename$extension"
-    echo "$inclusion_i $filename$extension" >> $basepwd/"$filename$extension"
-    echo "$inclusion_e" >> $basepwd/"$filename$extension"
+    echo $(get_config EPI_HEADER) > $basepwd/"$filename$extension"
+    # echo "$inclusion_s" > $basepwd/"$filename$extension"
+    # echo "$inclusion_i EPITECH PROJECT, $year" >> $basepwd/"$filename$extension"
+    # echo "$inclusion_i $dirname" >> $basepwd/"$filename$extension"
+    # echo "$inclusion_i File description:" >> $basepwd/"$filename$extension"
+    # echo "$inclusion_i $filename$extension" >> $basepwd/"$filename$extension"
+    # echo "$inclusion_e" >> $basepwd/"$filename$extension"
 }
 #Permet de récuperer les fichiers à partir d'un chemin et du fichier désiré
 search_file() {
