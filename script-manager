@@ -53,7 +53,7 @@ function get_library_repo {
             break
         else
             #Affiche une erreur si l'URL ne respecte pas la bonne syntaxe
-           $REPO_URL$script echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."
+            echo "Invalid URL. It should start with 'https://' and end with '.git'. Please try again."
         fi
     done
 }
@@ -68,6 +68,7 @@ for script in "${SCRIPTS[@]}"; do
     #   demandée a été déplacée.
     github_version=$(curl -s -L "$REPO_URL/$script")
     echo -n "$script"
+    #Vérifie que le script getlib sois autoriser dans les configuration
     if [ "$script" == "getlib" ] && [ "$(get_config LIB)" == "true" ]; then
         #Vérifie que le fichier existe
         if [ -f "$LOCAL_FOLDER/$script" ]; then
@@ -80,7 +81,7 @@ for script in "${SCRIPTS[@]}"; do
             #--show-progress force wget à afficher la progression du téléchargement même en mode silencieux.
             #-O spécifie le fichier de sortie, ici $DEST_FOLDER/$script. Enfin, $REPO_URL/$script est l'URL
             #du fichier à télécharger.
-            wget -q --show-progress -O "$LOCAL_FOLDER/$script" "$REPO_URL/$script"
+            sudo wget -q --show-progress -O "$LOCAL_FOLDER/$script" "$REPO_URL/$script"
             # sudo wget -q --show-progress -O "$REPO_URL$script" "$DEST_FOLDER$script"
             #En résumé, cette commande rend le fichier spécifié par $LOCAL_FOLDER/$script exécutable.
             sudo chmod +x "$LOCAL_FOLDER/$script"
