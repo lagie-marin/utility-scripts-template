@@ -67,7 +67,6 @@ for script in "${SCRIPTS[@]}"; do
     #-L permet à curl de suivre les redirections si le serveur rapporte que la ressource
     #   demandée a été déplacée.
     github_version=$(curl -s -L "$REPO_URL/$script")
-    echo -n "$script"
     #Vérifie que le script getlib sois autoriser dans les configuration
     if [ "$script" == "getlib" ] && [ "$(get_config LIB)" == "true" ]; then
         #Vérifie que le fichier existe
@@ -149,6 +148,12 @@ for script in "${SCRIPTS[@]}"; do
             #Indique à l'utilisateur que le fichier est bien mis à jour
             echo "$script update done."
         fi
+    else
+        #Vérifie si la commande getlib existe
+        if [ -f "$LOCAL_FOLDER/$script" ] && [ "$script" == "getlib" ]; then
+            #Supprime le fichier
+            sudo rm "$LOCAL_FOLDER/$script"
+            echo "uninstall $script"
+        fi
     fi
-    echo " OK"
 done
