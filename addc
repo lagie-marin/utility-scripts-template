@@ -94,7 +94,7 @@ if [ "${#headerfiles[@]}" -gt 1 ]; then
 fi
 # Ajoute les fonctions de base au fichier, c'est-à-dire une fonction qui
 # prend le nom du fichier et la fonction main qui appelle l'autre fonction
-echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> $basepwd/"$filename.c"
+echo -e $(get_config "EPI_HEADER")
 # Permets d'informer à l'utilisateur que le fichier a bien
 # été créé avec sont contenue.
 echo -e "${G}file $filename.c has been created${NC}"
