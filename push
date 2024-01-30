@@ -2,25 +2,30 @@
 commit=""
 file_name=""
 call_script_manager=true
+#display_usage &ffiche l'usage de la commande
 display_usage() {
     echo "Usage: $0 [-d] [-f file_name] commit_message"
     exit 84
 }
-
+#push_elem permet de push sont code sur github
 push_elem() {
     local commit="$1"
+    #Vérifie que file_name ne soit pas vide
+    #-n permets de vérifier si la variable n'est pas vide
     if [ -n "$file_name" ]; then
         git add "$file_name"
     else
         git add .
     fi
+    #Vérifie si call_script_manager est vrai
     if $call_script_manager; then
+        #Appel la commande pour mettre à jours les commandes
         script-manager
     fi
     git commit -m "$commit"
     git push origin main
 }
-
+#Récuperer les options qui sont dans les arguments
 while getopts ":df:" opt; do
     case $opt in
         d)
@@ -37,6 +42,7 @@ while getopts ":df:" opt; do
 done
 shift $((OPTIND-1))
 
+# Vérifie le nombre d'arguments
 if [ $# -ne 1 ]; then
     display_usage
 fi
