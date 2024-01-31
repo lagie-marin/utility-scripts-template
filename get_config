@@ -6,17 +6,22 @@ SETTINGS_FILE="$LOCAL_FOLDER/config.ptr"
 
 #Vérifie si le fichier n'existe pas
 if [ ! -f "$SETTINGS_FILE" ]; then
+    echo "Régénération de la config"
+    #Crée le fichier de config
+    sudo touch $SETTINGS_FILE
+    #Rajoute à qui appartient se fichier
+    sudo chown $USER "$SETTINGS_FILE"
+    #Donne les droit d'éxécution
+    sudo chmod +x "$SETTINGS_FILE"
+    
     #Vérifie si le fichier getlib existe
     if [ -f "$LOCAL_FOLDER/getlib" ]; then
-        echo "LIB=true" >> $SETTINGS_FILE
+        sudo echo "LIB=true" >> $SETTINGS_FILE
     else
-        echo "LIB=false" >> $SETTINGS_FILE
+        sudo echo "LIB=false" >> $SETTINGS_FILE
     fi
-    echo "CODING_STYLE=\"./coding-style-reports.log\"" >> $SETTINGS_FILE
-    echo "COLOR_CODE=\'\o033[38;5;214m\'" >> $SETTINGS_FILE
-    echo "COLOR_COM_I=\'\e[32m\'" >> $SETTINGS_FILE
-    echo "COLOR_COM=\'\o033[32m\'" >> $SETTINGS_FILE
-    echo "EPI_HEADER=\"\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n\"" >> $SETTINGS_FILE
+    sudo echo "CODING_STYLE=\"./coding-style-reports.log\"" >> $SETTINGS_FILE
+    sudo echo "EPI_HEADER=\"\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n\"" >> $SETTINGS_FILE
 fi
 # Vérifie si un argument a été fourni
 if [ -z "$1" ]; then

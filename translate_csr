@@ -4,10 +4,10 @@ if [ "$1" != "-d" ]; then
     script-manager
 fi
 ITALIQUE='\e[3m'
-GREEN_AUTO=$(get_config COLOR_COM)
-GREEN=$(get_config COLOR_COM_I)
+GREEN_AUTO='\o033[32m'
+GREEN='\e[32m'
 BOLD='\e[1m'
-OR=$(get_config COLOR_CODE)
+OR='\o033[38;5;214m'
 NC='\033[0m'
 RED='\e[1;31m'
 PINK='\e[38;5;205m'
@@ -133,7 +133,7 @@ fi
 #Il va me donner la documentation des 2 erreurs.
 error_info=()
 #Permets de récupérer les options donner en argument
-while getopts "e:" opt; do
+while getopts ":e:" opt; do
     case $opt in
         e)
             #shift $((OPTIND-2)): Permets de déplacer les arguments de position

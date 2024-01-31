@@ -69,11 +69,11 @@ add_header() {
         exit 1
     fi
     #Récupére le nom du repo
-    currentpwd=$(get_current_folder)
+    repo=$(git config --get remote.origin.url | sed 's/.*\///' | sed 's/\.git//')
     #Récupère la profondeurs du dossier pour le début du chemin relatif vers le fichier à pointer
     #Par exemple s'il a une profondeur de 3 il y aura ../../../
     depth=""
-    #currentpwd permets de récupérer le répertoire où se trouve l'utilisateur
+    #currentdir permets de récupérer le répertoire où se trouve l'utilisateur
     currentdir=$(pwd)
     #Trouve le répertoire racine du projet
     projectroot=$(git rev-parse --show-toplevel)
@@ -87,14 +87,15 @@ add_header() {
 
     #Récupére l'année
     year=$(date +%Y)
+    #Récupère le epi header dans le fichier de configuration avec la commande get_config,
+    #remplace certaines variables dans cette chaîne par leurs valeurs respectives
+    #get_config prend en argument le type de configuration qu'on veux récupèrer et renvoie sa valeurs.
+    #sed est l'éditeur de flux, qui peut être utilisé pour transformer du texte
+    #-E: Permets à sed d'utiliser des expressions régulières
+    config=$(echo $(get_config EPI_HEADER) | sed -E "s#\\\$inclusion_s#$inclusion_s#g; s#\\\$inclusion_i#$inclusion_i#g; s#\\\$inclusion_e#$inclusion_e#g; s#\\\$year#$year#g; s#\\\$repo#$repo#g; s#\\\$filename#$filename#g; s#\\\$extension#$extension#g")
+
     #Ajoute les Epi Header dans le fichier
-    echo $(get_config EPI_HEADER) > $basepwd/"$filename$extension"
-    # echo "$inclusion_s" > $basepwd/"$filename$extension"
-    # echo "$inclusion_i EPITECH PROJECT, $year" >> $basepwd/"$filename$extension"
-    # echo "$inclusion_i $dirname" >> $basepwd/"$filename$extension"
-    # echo "$inclusion_i File description:" >> $basepwd/"$filename$extension"
-    # echo "$inclusion_i $filename$extension" >> $basepwd/"$filename$extension"
-    # echo "$inclusion_e" >> $basepwd/"$filename$extension"
+    echo -e "$config" > "$currentdir/$filename$extension"
 }
 #Permet de récuperer les fichiers à partir d'un chemin et du fichier désiré
 search_file() {
