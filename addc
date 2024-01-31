@@ -2,8 +2,6 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
-source func
-
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'

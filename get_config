@@ -21,7 +21,7 @@ if [ ! -f "$SETTINGS_FILE" ]; then
         sudo echo "LIB=false" >> $SETTINGS_FILE
     fi
     sudo echo "CODING_STYLE=\"./coding-style-reports.log\"" >> $SETTINGS_FILE
-    sudo echo "EPI_HEADER=\"\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n\"" >> $SETTINGS_FILE
+    sudo echo "EPI_HEADER=\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$dirname\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e\n" >> $SETTINGS_FILE
 fi
 # Vérifie si un argument a été fourni
 if [ -z "$1" ]; then
