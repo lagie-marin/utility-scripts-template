@@ -47,7 +47,7 @@ fi
 add_header $filename "c"
 
 #Ajoute le fichier .h de criterion
-echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> $basepwd/"$filename.c"
+echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> "$(pwd)/$filename.c"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
