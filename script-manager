@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 PING_TARGET="www.google.com"
 #Vérifie si l'utilisateur est connecter à internet, si ce n'est pas le cas
@@ -68,7 +67,7 @@ for script in "${SCRIPTS[@]}"; do
     #   demandée a été déplacée.
     github_version=$(curl -s -L "$REPO_URL/$script")
     #Vérifie que le script getlib sois autoriser dans les configuration
-    if [ "$script" == "getlib" ] && [ "$(get_config LIB)" == "true" ]; then
+    if [ "$script" == "getlib" ] && [ "$(get_config LIB)" == "true" ] || [ "$script" != "getlib" ]; then
         #Vérifie que le fichier existe
         if [ -f "$LOCAL_FOLDER/$script" ]; then
             #lit le contenu du fichier spécifié par "$LOCAL_FOLDER/$script" et stocke ce contenu
