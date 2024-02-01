@@ -47,7 +47,7 @@ add_header $filename "h"
 #Mets le nom du fichier en Majuscule
 filename_upper=$(echo "$filename" | tr '[:lower:]' '[:upper:]')
 #Ajoute le ifndef, ect
-echo -e "#ifndef $filename_upper"_H"\n    #define $filename_upper"_H"\n#endif" >> "$basepwd/$filename.h"
+echo -e "#ifndef $filename_upper"_H"\n    #define $filename_upper"_H"\n#endif" >> "$(pwd)/$filename.h"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'

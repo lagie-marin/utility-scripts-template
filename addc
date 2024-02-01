@@ -2,6 +2,8 @@
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 
+source ./func
+
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
@@ -87,12 +89,12 @@ if [ "${#headerfiles[@]}" -gt 1 ]; then
     # Récupère les indices des fichiers d'en-tête choisis par l'utilisateur
     for index in "${selected_indices[@]}"; do
         # Ajoute le chemin relatif du fichier d'en-tête dans le fichier créé.
-        echo -e "#include \"${headerfiles[$index]}\"" >> $basepwd/"$filename.c"
+        echo -e "#include \"${headerfiles[$index]}\"" >> "$(pwd)/$filename.c"
     done
 fi
 # Ajoute les fonctions de base au fichier, c'est-à-dire une fonction qui
 # prend le nom du fichier et la fonction main qui appelle l'autre fonction
-echo -e $(get_config "EPI_HEADER")
+echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $filename();\n    return (0);\n}" >> "$(pwd)/$filename.c"
 # Permets d'informer à l'utilisateur que le fichier a bien
 # été créé avec sont contenue.
 echo -e "${G}file $filename.c has been created${NC}"
