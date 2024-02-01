@@ -95,7 +95,7 @@ add_header() {
     config=$(echo $(get_config EPI_HEADER) | sed -E "s#\\\$inclusion_s#$inclusion_s#g; s#\\\$inclusion_i#$inclusion_i#g; s#\\\$inclusion_e#$inclusion_e#g; s#\\\$year#$year#g; s#\\\$repo#$repo#g; s#\\\$filename#$filename#g; s#\\\$extension#$extension#g")
 
     #Ajoute les Epi Header dans le fichier
-    echo -e "$config" > "$currentdir/$filename$extension"
+    echo -e "$config" > "$(pwd)/$filename$extension"
 }
 #Permet de récuperer les fichiers à partir d'un chemin et du fichier désiré
 search_file() {
