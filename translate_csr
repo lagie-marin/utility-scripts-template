@@ -14,7 +14,6 @@ PINK='\e[38;5;205m'
 
 #Permets de vérifier si le fichier existe
 #-e: vérifie si le fichier ou le répertoire existe
-echo "$(get_config CODING_STYLE)"
 if [ -e "$(get_config CODING_STYLE)" ]; then
     #Permets de lire le fichier ligne par ligne
     #IFS=:  vous empêchez le script de diviser les lignes en champs. Cela est
