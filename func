@@ -61,9 +61,9 @@ add_header() {
             extension=".h"
         fi
     elif [ "$arg" = "make" ]; then #Si arg = make sa veux dire que c'est pour un Makefile
-        inclusion_s="##"
-        inclusion_i="##"
-        inclusion_e="##"
+        inclusion_s="\\#\\#"
+        inclusion_i="\\#\\#"
+        inclusion_e="\\#\\#"
     else #Sinon sa donne une erreur
         echo "Erreur: Le header $arg n'existe pas!"
         exit 1
