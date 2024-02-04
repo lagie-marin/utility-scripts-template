@@ -23,13 +23,14 @@ if [ ! -f "$SETTINGS_FILE" ]; then
     sudo echo "CODING_STYLE=./coding-style-reports.log" >> $SETTINGS_FILE
     # inclusion_s => /*  (en c)
     # inclusion_i => ** (en c)
-    # inclusion_e => */ (en c)
+    # inclusion_e => */ (en c)    sudo echo "LAUNCH=code"
     # year => 2023
     # filename => nom du fichier
     # extension => se qui suit le nom du fichier .c
     # Pour modifier le epi header vous pouvez modifier le fichier de configuration
     # qui se trouve dans le dossier /usr/local/bin/
     sudo echo "EPI_HEADER=\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$repo\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e" >> $SETTINGS_FILE
+    sudo echo "LAUNCH=code" >> $SETTINGS_FILE
 fi
 # Vérifie si un argument a été fourni
 if [ -z "$1" ]; then
