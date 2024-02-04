@@ -5,7 +5,7 @@ source func
 
 folder_path="."
 files=""
-makefiles=()
+makefiles=("Aucun")
 ignore_folders=()
 call_script_manager=true
 lib=false
@@ -13,6 +13,7 @@ makefile_name="Makefile"
 binary_name="bin_name"
 selected_makefiles=()
 force=false
+ok_select=true
 
 #display_usage permets d'afficher les usages de la commande
 display_usage() {
@@ -204,7 +205,7 @@ if [ "$lib" != true ] || [ "$force" == true ]; then
         if [ $make != "./Makefile" ]; then
             #Ajoute le Makefile dans la liste
             #cut -c 3-: permets de supprimer les 2 1er caractères
-            makefiles+="$(echo $make | cut -c 3-)"
+            makefiles+=("$(echo $make | cut -c 3-)")
         fi
     done
     #Vérifie si dans la liste makefiles n'est pas vide
@@ -222,6 +223,10 @@ if [ "$lib" != true ] || [ "$force" == true ]; then
         read -a selected_indices
         #Parcours les indices donnés par l'utilisateur
         for index in "${selected_indices[@]}"; do
+            if [ "${selected_indices[index]}" == 0 ]; then
+                selected_makefiles=()
+                break
+            fi
             #Ajoute les makefiles choisis par l'utilisateur dans une liste
             selected_makefiles+=("${makefiles[$index]//Makefile/}")
         done

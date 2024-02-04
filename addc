@@ -99,7 +99,7 @@ if [ "${#headerfiles[@]}" -gt 1 ]; then
             break
         fi
     done
-    if $ok_select ; then
+    if $ok_select; then
         # Récupère les indices des fichiers d'en-tête choisis par l'utilisateur
         for index in "${selected_indices[@]}"; do
             # Ajoute le chemin relatif du fichier d'en-tête dans le fichier créé.
