@@ -46,8 +46,56 @@ fi
 #add_header filename type
 add_header $filename "c"
 
+# Récupère le répertoire du projet
+project_dir=$(get_current_folder)
+
+# Trouve tous les fichiers d'en-tête et convertit leur chemin en chemin relatif
+for header in $(find $project_dir -type f -name "*.h"); do
+    # Convertis le chemin absolu en un chemin relatif par
+    # rapport au répertoire du projet
+    relative_path=$(realpath --relative-to=$project_dir $header)
+    # Ajoute les fichiers d'en-tête trouvés dans le repo à une liste.
+    headerfiles+=" $(realpath --relative-to=$(pwd) $header)"
+done
+
+# Si des fichiers d'en-tête ont été trouvés, permettent à
+# l'utilisateur de choisir ceux à inclure
+headerfiles=("" ${headerfiles[@]})
+# Vérifie si dans la liste headerfiles il y a au moins 1 fichier d'en-tête
+if [ "${#headerfiles[@]}" -gt 1 ]; then
+    # Boucle sur l'ensemble des fichiers d'en-tête afin de les afficher
+    # sur le terminal.
+    for index in "${!headerfiles[@]}"; do
+        #Vérifie que nous somme sur le 1er tour de boucle
+        if [ $index -eq 0 ]; then
+            echo "$index: Aucun"
+        else
+            # Affiche chaque fichier d'en-tête sur le terminal
+            echo "$index: ${headerfiles[$index]}"
+        fi
+    done
+    echo "Entrez les numéros des .h que vous souhaitez utiliser, séparés par des espaces:"
+    # Attends que l'utilisateur donne les indices des fichiers d'en-tête.
+    read -a selected_indices
+    #Vérifie si l'utilisateur à mis la valeur 0 pour choisir les fichiers .h
+    for index in "${!selected_indices[@]}"; do
+        #Si 0 à était trouvez on mets 
+        if [ "${selected_indices[index]}" == "0" ]; then
+            ok_select=false
+            break
+        fi
+    done
+    if $ok_select; then
+        # Récupère les indices des fichiers d'en-tête choisis par l'utilisateur
+        for index in "${selected_indices[@]}"; do
+            # Ajoute le chemin relatif du fichier d'en-tête dans le fichier créé.
+            echo -e "#include \"${headerfiles[$index]}\"" >> "$(pwd)/$filename.c"
+        done
+    fi
+fi
+
 #Ajoute le fichier .h de criterion
-echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n    return;\n}\n" >> "$(pwd)/$filename.c"
+echo -e "#include <criterion/criterion.h>\n\nTest ( my_revstr , check_reverse_string )\n{\n}\n" >> "$(pwd)/$filename.c"
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
