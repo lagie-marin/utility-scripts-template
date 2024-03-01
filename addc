@@ -114,7 +114,7 @@ echo -e "\nint $filename(void)\n{\n    return 0;\n}\n\nint main(void)\n{\n    $f
 # été créé avec sont contenue.
 echo -e "${G}file $filename.c has been created${NC}"
 # Lance le fichier qui a été créé dans vscode.
-code $filename.c
+eval $(get_config LAUNCH) $filename.c
 # Permet d'informer à l'utilisateur que le fichier est entrain
 # d'être chargé sur vscode
 echo -e "${RED}Loading resources...${NC}"
