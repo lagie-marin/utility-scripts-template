@@ -1,10 +1,10 @@
 #!/bin/sh
 commit=""
 file_name=""
-call_script_manager=true
+call_script_manager=false
 #display_usage &ffiche l'usage de la commande
 display_usage() {
-    echo "Usage: $0 [-d] [-f file_name] commit_message"
+    echo "Usage: $0 [-u] [-f file_name] commit_message"
     exit 84
 }
 #push_elem permet de push sont code sur github
@@ -26,10 +26,10 @@ push_elem() {
     git push origin main
 }
 #Récuperer les options qui sont dans les arguments
-while getopts ":df:" opt; do
+while getopts ":uf:" opt; do
     case $opt in
-        d)
-            call_script_manager=false
+        u)
+            call_script_manager=true
             ;;
         f)
             file_name="$OPTARG"

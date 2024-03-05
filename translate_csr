@@ -1,6 +1,6 @@
 #!/bin/sh
-#Vérifie s'il n'y a pas le -d
-if [ "$1" != "-d" ]; then
+#Vérifie s'il n'y a pas le -u
+if [ "$1" != "-u" ]; then
     script-manager
 fi
 ITALIQUE='\e[3m'

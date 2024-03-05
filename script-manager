@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PING_TARGET="www.google.com"
+PING_TARGET="https://raw.githubusercontent.com"
 #Vérifie si l'utilisateur est connecter à internet, si ce n'est pas le cas
 #le script s'arrete
 if ! ping -c 1 "$PING_TARGET" &> /dev/null; then

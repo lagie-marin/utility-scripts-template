@@ -7,7 +7,7 @@ folder_path="."
 files=""
 makefiles=("Aucun")
 ignore_folders=()
-call_script_manager=true
+call_script_manager=false
 lib=false
 makefile_name="Makefile"
 binary_name="bin_name"
@@ -115,7 +115,7 @@ generate_makefile() {
 #donc $# -gt 0 vérifie si le nombre d'arguments est supérieur à 0
 while [[ $# -gt 0 ]]; do
     #vérifie les différents cas de paramètre
-    #-d: permets d'ignorer la mises à jour des scripts
+    #-u: permets de faire la mises à jour des scripts
     #-l: permets de configurer le générateur pour générer un Makefile pour une lib
     #-f: permets d'ajouter un dossier spécifique pour aller chercher les différents fichiers c
     #-i: permets d'ignorer plusieurs dossiers. Les fichiers dans les dossiers ignorés ne seront
@@ -163,8 +163,8 @@ while [[ $# -gt 0 ]]; do
                     l)
                         lib=true
                         ;;
-                    d)
-                        call_script_manager=false
+                    u)
+                        call_script_manager=true
                         ;;
                     f)
                         echo "f: $1"

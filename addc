@@ -7,7 +7,7 @@ source func
 G='\033[0;32m'
 NC='\033[0m'
 RED='\e[0;31m'
-call_script_manager=true
+call_script_manager=false
 filename=""
 headerfiles=()
 selected_headerfiles=()
@@ -18,12 +18,12 @@ if (( $# > 3 )) || ( (( $# == 1 )) && [[ $1 == "-d" ]] ); then
     echo "Usage: ./addc [-d] [file_name]"
     exit 84
 fi
-# Traite les options, si l'option "-d" est appelé la commande
-# ne se mettra pas à jour
-while getopts "d" opt; do
+# Traite les options, si l'option "-u" est appelé, la commande
+# se mettra à jour
+while getopts "u" opt; do
     case $opt in
-        d)
-            call_script_manager=false
+        u)
+            call_script_manager=true
             ;;
         \?)
             echo "Invalid option: -$OPTARG"
