@@ -2,4 +2,4 @@
 #Appel la commande pour le coding-style
 coding-style . .
 #Appel la commande pour ajouter le nom de l'erreur et empêche la mise à jour de se faire avec -d
-translate_csr -d
+translate_csr
