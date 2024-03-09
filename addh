@@ -9,13 +9,12 @@ source func
 filename=""
 ok_select=true
 #Vérifie s'il n'y a pas le -u
-if [ "$1" != "-u" ]
-then
+if [ "$1" == "-u" ]; then
     script-manager
 fi
 # Vérifie le nombre d'arguments
 if (( $# < 1 )) || (( $# > 2 )); then
-    echo "Usage: ./addh [-d] [file_name]"
+    echo "Usage: ./addh [-u] [file_name]"
     exit 84
 fi
 #Parcour les arguments
