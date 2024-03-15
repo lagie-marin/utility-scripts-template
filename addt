@@ -9,7 +9,7 @@ source func
 
 filename=""
 #Vérifie s'il n'y a pas le -u
-if [ "$1" != "-u" ]
+if [ "$1" == "-u" ]
 then
     script-manager
 fi
