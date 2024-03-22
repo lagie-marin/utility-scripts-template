@@ -23,7 +23,7 @@ push_elem() {
         script-manager
     fi
     git commit -m "$commit"
-    git push origin main
+    git push
 }
 #Récuperer les options qui sont dans les arguments
 while getopts ":uf:" opt; do
