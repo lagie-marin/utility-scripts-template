@@ -5,6 +5,7 @@ source func
 
 folder_path="."
 files=""
+file_type=".c"
 makefiles=("Aucun")
 ignore_folders=()
 call_script_manager=false
@@ -117,6 +118,7 @@ while [[ $# -gt 0 ]]; do
     #vérifie les différents cas de paramètre
     #-u: permets de faire la mises à jour des scripts
     #-l: permets de configurer le générateur pour générer un Makefile pour une lib
+    #-t: permets de choisir le type du fichier, par defaut se sera le .c
     #-f: permets d'ajouter un dossier spécifique pour aller chercher les différents fichiers c
     #-i: permets d'ignorer plusieurs dossiers. Les fichiers dans les dossiers ignorés ne seront
     #   pas ajoutés dans le Makefile
@@ -126,6 +128,9 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -l*)
             lib=true
+            ;;
+        -t)
+            file_type="$2"
             ;;
         -f)
             #Récupère le dossier à pointer
@@ -188,13 +193,13 @@ fi
 #-z: est un opérateur de test qui renvoie vrai si la longueur de la chaine est 0
 if [[ -z "$ignore_folders" ]]; then
     #Recherche tous les fichiers qui se termine par .c
-    files=$(find $folder_path -type f -name "*.c")
+    files=$(find $folder_path -type f -name "$file_type")
 else
     #Recherche tous les fichiers qui se termine par .c et supprime les fichiers qui
     #supprime les fichiers qui se trouvent dans les dossiers ignorer
     #-v: inverse la correspondance
     #-E: permets l'utilisation d'expression régulière.
-    files=$(find $folder_path -type f -name "*.c" | grep -vE "($ignore_folders)")
+    files=$(find $folder_path -type f -name "$file_type" | grep -vE "($ignore_folders)")
 fi
 #Vérifie que lib est false ou que force est vraie
 if [ "$lib" != true ] || [ "$force" == true ]; then
