@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo -e "addc:\n\taddc [-d] filename [-i file_header]"
 echo -e "addh:\n\taddh [-d] filename"
 echo -e "adds:\n\tadds [-d] filename"

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This script will create a C file with the epitech Header
 # Usage: ./touch_h [file_name]
 

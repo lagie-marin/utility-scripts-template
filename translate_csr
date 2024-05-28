@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #Vérifie s'il n'y a pas le -u
 if [ "$1" == "-u" ]; then
     script-manager

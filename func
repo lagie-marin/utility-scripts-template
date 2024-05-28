@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #get_current_folder permet de récuperer le nom du repo
 get_current_folder() {

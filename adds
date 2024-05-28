@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 filename=""
 #Vérifie s'il n'y a pas le -u
 if [ "$1" == "-u" ]
@@ -21,6 +21,6 @@ do
     fi
 done
 #Ajoute le shebang dans le fichier shell
-echo "#!/bin/sh" > "$filename"
+echo "#!/bin/bash" > "$filename"
 #Ajoute toute les permissions au fichier
 chmod 755 "$filename"

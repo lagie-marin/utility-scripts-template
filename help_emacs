@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo "Ctrl + x + 0: Kill"
 echo "Ctrl + z: Ferme la fenetre emacs"
 echo "fg: Revenir sur le fichier"

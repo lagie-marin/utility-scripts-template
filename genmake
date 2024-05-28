@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #Rend utilisable les commandes dans func dans se fichier
 #Pour l'image c'est le même principe que le include en c
 source func

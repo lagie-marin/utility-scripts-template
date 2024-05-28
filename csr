@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #Appel la commande pour le coding-style
 eval $(get_config CODING_STYLE_RULES) . .
 #Appel la commande pour ajouter le nom de l'erreur et empêche la mise à jour de se faire avec -d
