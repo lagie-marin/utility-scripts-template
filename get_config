@@ -29,6 +29,7 @@ if [ ! -f "$SETTINGS_FILE" ]; then
     # extension => se qui suit le nom du fichier .c
     # Pour modifier le epi header vous pouvez modifier le fichier de configuration
     # qui se trouve dans le dossier /usr/local/bin/
+    sudo echo "CODING_STYLE_RULES=coding-style" >> $SETTINGS
     sudo echo "EPI_HEADER=\$inclusion_s\n\$inclusion_i EPITECH PROJECT, \$year\n\$inclusion_i \$repo\n\$inclusion_i File description:\n\$inclusion_i \$filename\$extension\n\$inclusion_e" >> $SETTINGS_FILE
     sudo echo "LAUNCH=code" >> $SETTINGS_FILE
 fi

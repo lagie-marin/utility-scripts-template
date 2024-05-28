@@ -1,5 +1,5 @@
 #!/bin/sh
 #Appel la commande pour le coding-style
-coding-style . .
+eval $(get_config CODING_STYLE_RULES) . .
 #Appel la commande pour ajouter le nom de l'erreur et empêche la mise à jour de se faire avec -d
 translate_csr
