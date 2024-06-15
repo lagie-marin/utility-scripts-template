@@ -48,7 +48,7 @@ generate_makefile() {
     #Ajoute les CFLAGS important
     #-g3 permets de compiler avec valgrind pour les différentes erreurs que vous pouvez rencontrer
     #-Wall -Wextra permets de récupérer les différentes erreurs lors de la compilation avec le Makefile
-    echo "CFLAGS = -g3 -Wall -Wextra" >> $makefile_name
+    echo "CFLAGS = -g3 -Wall -Wextra -Iinclude" >> $makefile_name
     #Cette condition permet de vérifier si on veut générer un Makefile pour une lib
     if [ "$lib" == true ]; then
         #Ajoute le nom du binaire avec un .a après le nom du fichier afin d'informer que c'est une lib
