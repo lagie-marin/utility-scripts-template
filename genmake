@@ -15,6 +15,7 @@ binary_name="bin_name"
 selected_makefiles=()
 force=false
 ok_select=true
+compiler="gcc"
 
 #display_usage permets d'afficher les usages de la commande
 display_usage() {
@@ -44,7 +45,7 @@ generate_makefile() {
     #Ajoute un espace après avoir ajouté tous les SRC dans le Makefile
     echo "" >> $makefile_name
     #Ajoute la compilation des objets dans le Makefile
-    echo "OBJ = \${SRC:.c=.o}" >> $makefile_name
+    echo "OBJ = \${SRC:$file_type=.o}" >> $makefile_name
     #Ajoute les CFLAGS important
     #-g3 permets de compiler avec valgrind pour les différentes erreurs que vous pouvez rencontrer
     #-Wall -Wextra permets de récupérer les différentes erreurs lors de la compilation avec le Makefile
@@ -85,7 +86,7 @@ generate_makefile() {
         done
         #Ajoute la commande de compilation dans le Makefile pour lier les fichiers source
         #en executable
-        echo -e "\tgcc \${OBJ} -o \${NAME} your_libs" >> $makefile_name
+        echo -e "\t$compiler \${OBJ} -o \${NAME} your_libs" >> $makefile_name
     fi
     #Ajoute la règle clean
     echo -e "\nclean:" >> $makefile_name
@@ -128,6 +129,9 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -l*)
             lib=true
+            ;;
+        -c)
+            compiler="$2"
             ;;
         -t)
             file_type="$2"
@@ -193,13 +197,13 @@ fi
 #-z: est un opérateur de test qui renvoie vrai si la longueur de la chaine est 0
 if [[ -z "$ignore_folders" ]]; then
     #Recherche tous les fichiers qui se termine par .c
-    files=$(find $folder_path -type f -name "*.c")
+    files=$(find $folder_path -type f -name "*$file_type")
 else
     #Recherche tous les fichiers qui se termine par .c et supprime les fichiers qui
     #supprime les fichiers qui se trouvent dans les dossiers ignorer
     #-v: inverse la correspondance
     #-E: permets l'utilisation d'expression régulière.
-    files=$(find $folder_path -type f -name "*.c" | grep -vE "($ignore_folders)")
+    files=$(find $folder_path -type f -name "*$file_type" | grep -vE "($ignore_folders)")
 fi
 #Vérifie que lib est false ou que force est vraie
 if [ "$lib" != true ] || [ "$force" == true ]; then
