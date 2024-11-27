@@ -37,6 +37,9 @@ get_current_folder() {
 
 #add_header permet d'ajouter le header d'epitech dans les fichiers c, h et make
 add_header() {
+    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+        return 1
+    fi
     #filename permets de stocker le nom du fichier
     local filename=$1
     #arg permet de récupérer le type du fichier
