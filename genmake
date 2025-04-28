@@ -376,6 +376,11 @@ extract_language_and_compiler_from_pdf() {
                 ".lisp") compiler="sbcl" ;;
                 ".lua") compiler="lua"; is_scripting=true ;;
             esac
+
+            if [[ "$binary_name" == *.a ]]; then
+                lib=true
+                compiler="ar rc"
+            fi
             echo "Using compiler: $compiler for files with extension: $file_type"
             return 0
         fi
@@ -385,6 +390,8 @@ extract_language_and_compiler_from_pdf() {
     rm "$temp_file"
     return 1
 }
+
+
 
 generate_makefile() {
     # Ajout de l'en-tête du Makefile
@@ -429,8 +436,8 @@ re: fclean all" > $makefile_name
     echo "OBJ = \$(SRC:%.c=\$(OBJ_DIR)/%.o)" >> $makefile_name
     echo "CFLAGS += -g3 -Wall -Wextra -Iinclude" >> $makefile_name
 
-    
     if [ "$lib" == true ]; then
+        compiler="ar rc"
         echo "NAME = $binary_name.a" >> $makefile_name
     else
         echo "NAME = $binary_name" >> $makefile_name
@@ -485,13 +492,16 @@ re: fclean all" > $makefile_name
         # For compiled languages
         echo "all: \$(OBJ_DIR) \$(NAME)" >> $makefile_name
     fi
-    
-    # ...rest of Makefile generation...
-    
+    echo -e "\$(OBJ_DIR):" >> $makefile_name
+    echo -e "\t@mkdir -p \$(OBJ_DIR)" >> $makefile_name
     # Modify the compilation rules based on language
     echo -e "\$(OBJ_DIR)/%.o: %$file_type | \$(OBJ_DIR)" >> $makefile_name
-    echo -e "\t$compile_cmd" >> $makefile_name
-    
+    echo -e "\t@mkdir -p \$(dir \$@)" >> $makefile_name
+    if [ "$lib" == true ]; then
+        echo -e "\tar rc \$@ \$<" >> $makefile_name
+    else
+        echo -e "\t$compiler \$(CFLAGS) -c \$< -o \$@" >> $makefile_name
+    fi
     # Modify the linking rule
     if [ "$is_scripting" = true ]; then
         # For scripting languages, we might need different rules
@@ -503,15 +513,6 @@ re: fclean all" > $makefile_name
     
     # Add the linking command
     echo -e "\t$link_cmd" >> $makefile_name
-
-    echo "\$(OBJ_DIR):" >> $makefile_name
-    echo -e "\tmkdir -p \$(OBJ_DIR)" >> $makefile_name
-    echo "" >> $makefile_name
-
-    echo "\$(OBJ_DIR)/%.o: %.c | \$(OBJ_DIR)" >> $makefile_name
-    echo -e "\t@mkdir -p \$(dir \$@)" >> $makefile_name
-    echo -e "\tgcc \$(CFLAGS) -c \$< -o \$@" >> $makefile_name
-    echo "" >> $makefile_name
 
     # Ajout des règles de nettoyage
     echo "clean:" >> $makefile_name
