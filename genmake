@@ -411,7 +411,7 @@ fclean: clean
     rm -f \$(NAME)
     rm -rf .stack-work
 
-re: fclean all" > $makefile_name
+re: fclean all" >> $makefile_name
         echo "Haskell Makefile generated: $makefile_name"
         return
     fi
