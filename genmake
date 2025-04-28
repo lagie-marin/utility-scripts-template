@@ -398,7 +398,7 @@ generate_makefile() {
     add_header $makefile_name "make"
 
     if [ "$extracted_language" == "haskell" ]; then
-        echo "BINARY_PATH := \$(shell stack path --local-install-root)
+        echo "\nBINARY_PATH := \$(shell stack path --local-install-root)
 NAME = $binary_name
 all:
 \tstack build
