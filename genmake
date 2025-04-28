@@ -401,15 +401,15 @@ generate_makefile() {
         echo "BINARY_PATH := \$(shell stack path --local-install-root)
 NAME = $binary_name
 all:
-    stack build
-    cp \$(BINARY_PATH)/bin/\$(NAME)-exe ./\$(NAME)
+\tstack build
+\tcp \$(BINARY_PATH)/bin/\$(NAME)-exe ./\$(NAME)
 
 clean:
-    stack clean
+\tstack clean
 
 fclean: clean
-    rm -f \$(NAME)
-    rm -rf .stack-work
+\trm -f \$(NAME)
+\trm -rf .stack-work
 
 re: fclean all" >> $makefile_name
         echo "Haskell Makefile generated: $makefile_name"
