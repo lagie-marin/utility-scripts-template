@@ -1,0 +1,7 @@
+include
+src
+B-CPE*
+B-FUN*
+part2*
+Projet*
+*.c

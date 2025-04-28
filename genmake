@@ -22,93 +22,516 @@ display_usage() {
     echo "Usage: $0 [-d] [-n name] [-l] [-force] [-f folderpath] [-i ignore_folder]"
 }
 
-generate_makefile() {
-    #Initialisation des variables pour le bon fonctionnement de la génération
-    #count permets de savoir à quelle tour de boucle on est
-    count=0
-    add_header $makefile_name "make"
-    #Cette boucle permets de récupérer un par un les fichiers qui se trouve dans la variable files
-    for file in $files; do
-        #On vérifie que count est égale à 0, si c'est le cas on va ajouter la ligne SRC = avec
-        #le chemin relatif du chemin
-        #-eq est un opérateur logique qui signifie "égal à" et renvoie 0 ou 1
-        if [ $count -eq 0 ]; then
-            #Ajout la ligne SRC = avec le chemin relatif du premier fichier dans le Makefile
-            echo "SRC = $file \\" >> $makefile_name
+# Fonction : check_poppler_utils
+# Description :
+#   Cette fonction vérifie si la commande `pdftotext` (fournie par le paquet `poppler-utils`) est installée sur le système.
+#   Si elle n'est pas installée, la fonction demande à l'utilisateur s'il souhaite l'installer.
+#   Elle prend en charge plusieurs gestionnaires de paquets Linux (apt, dnf, yum, pacman).
+#   Si l'utilisateur refuse l'installation, le script se termine avec un message d'erreur.
+# Paramètres :
+#   Aucun
+# Retour :
+#   Quitte le script si `pdftotext` n'est pas installé et que l'utilisateur refuse l'installation.
+check_poppler_utils() {
+    # Vérifie si la commande `pdftotext` est disponible sur le système
+    if ! command -v pdftotext &> /dev/null; then
+        # Informe l'utilisateur que `poppler-utils` n'est pas installé
+        echo "poppler-utils n'est pas installé. Voulez-vous l'installer ? (y/n)"
+        # Lit la réponse de l'utilisateur
+        read answer
+        # Si l'utilisateur accepte l'installation
+        if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+            # Vérifie quel gestionnaire de paquets est disponible et installe `poppler-utils`
+            if command -v apt &> /dev/null; then
+                # Installe avec `apt` (systèmes basés sur Debian/Ubuntu)
+                sudo apt-get install -y poppler-utils
+            elif command -v dnf &> /dev/null; then
+                # Installe avec `dnf` (systèmes basés sur Fedora)
+                sudo dnf install -y poppler-utils
+            elif command -v yum &> /dev/null; then
+                # Installe avec `yum` (anciennes versions de Fedora/Red Hat)
+                sudo yum install -y poppler-utils
+            elif command -v pacman &> /dev/null; then
+                # Installe avec `pacman` (systèmes basés sur Arch Linux)
+                sudo pacman -S poppler
+            else
+                # Si aucun gestionnaire de paquets pris en charge n'est trouvé
+                echo "Impossible de détecter un gestionnaire de paquets. Veuillez installer poppler-utils manuellement."
+                # Quitte le script avec un code d'erreur
+                exit 1
+            fi
         else
-            #Ajout des autres lignes des fichiers après le SRC et commence par un tab
-            echo -e "\t$file \\" >> $makefile_name
+            # Si l'utilisateur refuse l'installation
+            echo "poppler-utils est requis pour l'extraction de PDF. Arrêt du script."
+            exit 1
         fi
-        #Incrémente count de 1
-        count=$((count+1))
+    fi
+}
+
+# Fonction : extract_binary_name_from_pdf
+# Description :
+#   Cette fonction permet d'extraire un nom binaire à partir d'un fichier PDF.
+#   Elle demande à l'utilisateur s'il souhaite extraire le nom depuis un PDF.
+#   Si oui, elle recherche les fichiers PDF dans le répertoire courant ou demande à l'utilisateur de fournir un chemin.
+#   Ensuite, elle utilise `pdftotext` pour convertir le PDF en texte et tente d'extraire un nom binaire potentiel.
+# Paramètres :
+#   Aucun
+# Retour :
+#   Définit la variable globale `binary_name` avec le nom binaire extrait ou un nom par défaut si aucun n'est trouvé.
+extract_binary_name_from_pdf() {
+    # Affiche un message demandant à l'utilisateur s'il souhaite extraire le nom binaire depuis un PDF
+    echo "Binary name not specified. Would you like to extract it from a PDF? (y/n)"
+    # Lit la réponse de l'utilisateur
+    read answer
+    # Vérifie si l'utilisateur a répondu "y" ou "Y"
+    if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+        # Vérifie si la commande `pdftotext` est installée
+        check_poppler_utils
+        
+                # Recherche les fichiers PDF dans le répertoire courant
+        # Utilise `find` avec un séparateur nul pour gérer les espaces dans les noms de fichiers
+        mapfile -d $'\0' pdf_files < <(find . -maxdepth 2 -type f -name "*.pdf" -print0)
+        
+                if [ ${#pdf_files[@]} -eq 0 ]; then
+            # Aucun fichier PDF trouvé
+            echo "No PDF files found in the current directory."
+            echo "Enter the path to the PDF file:"
+            read -r pdf_path
+        elif [ ${#pdf_files[@]} -eq 1 ]; then
+            # Un seul fichier PDF trouvé
+            echo "Found PDF file: ${pdf_files[0]}"
+            echo "Use this file? (y/n)"
+            read use_found
+            if [[ "$use_found" == "y" || "$use_found" == "Y" ]]; then
+                pdf_path="${pdf_files[0]}"
+            else
+                echo "Enter the path to the PDF file:"
+                read -r pdf_path
+            fi
+        else
+            # Plusieurs fichiers PDF trouvés
+            echo "Found multiple PDF files:"
+            for i in "${!pdf_files[@]}"; do
+                echo "$((i+1)): ${pdf_files[$i]}"
+            done
+            echo "Select a PDF file (number) or enter 0 to specify a different path:"
+            read pdf_selection
+            
+            if [ "$pdf_selection" -eq 0 ] 2>/dev/null; then
+                echo "Enter the path to the PDF file:"
+                read -r pdf_path
+            elif [ "$pdf_selection" -ge 1 ] 2>/dev/null && [ "$pdf_selection" -le "${#pdf_files[@]}" ]; then
+                pdf_path="${pdf_files[$((pdf_selection-1))]}"
+            else
+                echo "Invalid selection. Please enter the path to the PDF file:"
+                read -r pdf_path
+            fi
+        fi
+        
+        if [ ! -f "$pdf_path" ]; then
+            # Vérifie si le fichier spécifié existe
+            echo "Error: File '$pdf_path' not found."
+            return 1
+        fi
+        
+        # Crée un fichier temporaire pour stocker le texte extrait du PDF
+        temp_file=$(mktemp)
+        
+        # Convertit le PDF en texte
+        pdftotext "$pdf_path" "$temp_file"
+        
+        # Tente de trouver un nom binaire basé sur le nom du dossier courant
+        current_dir=$(basename "$(pwd)")
+        if grep -q "$current_dir" "$temp_file"; then
+            echo "Found potential binary name from folder name: $current_dir"
+            echo "Use '$current_dir' as the binary name? (y/n)"
+            read use_dirname
+            if [[ "$use_dirname" == "y" || "$use_dirname" == "Y" ]]; then
+                binary_name="$current_dir"
+                rm "$temp_file"
+                return 0
+            fi
+        fi
+        
+        # Recherche un motif spécifique "binary name:" dans le texte extrait
+        binary_line=$(grep -i "binary name:" "$temp_file")
+        
+        if [ -n "$binary_line" ]; then
+            # Extrait le mot après "binary name:"
+            extracted_name=$(echo "$binary_line" | sed -E 's/.*binary name:[ \t]*([a-zA-Z0-9_\.-]+).*/\1/i')
+            if [ -n "$extracted_name" ]; then
+                binary_name="$extracted_name"
+                echo "Found binary name: $binary_name"
+                return 0
+            fi
+        fi
+        
+        # Recherche des noms potentiels si aucun motif spécifique n'est trouvé
+        potential_names=$(grep -o -E '\b[a-zA-Z][a-zA-Z0-9_-]{2,}\b' "$temp_file" | sort | uniq)
+        
+        if [ -z "$potential_names" ]; then
+            echo "No potential binary names found in the PDF."
+            rm "$temp_file"
+            return 1
+        fi
+        
+        # Affiche les noms potentiels trouvés
+        echo "Potential binary names found:"
+        count=1
+        name_array=()
+        while IFS= read -r name; do
+            echo "$count: $name"
+            name_array+=("$name")
+            ((count++))
+        done <<< "$potential_names"
+        
+        # Permet à l'utilisateur de sélectionner un nom ou d'en entrer un manuellement
+        echo "Enter the number of the binary name to use (or 0 to enter manually):"
+        read selection
+        
+        if [ "$selection" -eq 0 ] 2>/dev/null; then
+            echo "Enter binary name manually:"
+            read binary_name
+        elif [ "$selection" -ge 1 ] 2>/dev/null && [ "$selection" -lt "$count" ]; then
+            binary_name="${name_array[$((selection-1))]}"
+            echo "Selected binary name: $binary_name"
+        else
+            echo "Invalid selection. Using default binary name."
+        fi
+    fi
+}
+
+extract_language_and_compiler_from_pdf() {
+    # Create the temporary file if it doesn't exist
+    if [ ! -f "$temp_file" ]; then
+        return 1
+    fi
+    # Try to find specific language mention pattern
+    language_line=$(grep -i -E "language:" "$temp_file" | awk -F'language:' '{print $2}' | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
+    if [ -n "$language_line" ]; then
+        # Extract potential language names and convert to lowercase for comparison
+        for lang in "c" "c++" "cpp" "python" "python3" "java" "javascript" "js" "go" "rust" "ruby" "php" "swift" "kotlin" "scala" "haskell" "perl" "bash" "shell" "typescript" "ts" "csharp" "c#" "objective-c" "r" "dart" "assembly" "asm" "fortran" "ada" "lisp" "lua"; do
+            # Convert language line to lowercase for comparison
+            language_line_lower=$(echo "$language_line" | tr '[:upper:]' '[:lower:]')
+            # Convert lang to lowercase too (though our list is already lowercase)
+            lang_lower=$(echo "$lang" | tr '[:upper:]' '[:lower:]')
+            
+            if echo "$language_line_lower" | grep -q "$lang_lower"; then
+                extracted_language="$lang_lower"
+                echo "Found programming language: $extracted_language"
+                break
+            fi
+        done
+        
+        if [ -n "$extracted_language" ]; then
+            # Set compiler and file extension based on language
+            case "$extracted_language" in
+                "c")
+                    compiler="gcc"
+                    file_type=".c"
+                    ;;
+                "c++" | "cpp")
+                    compiler="g++"
+                    file_type=".cpp"
+                    ;;
+                "python" | "python3")
+                    compiler="python3"
+                    file_type=".py"
+                    is_scripting=true
+                    ;;
+                "java")
+                    compiler="javac"
+                    file_type=".java"
+                    ;;
+                "javascript" | "js")
+                    compiler="node"
+                    file_type=".js"
+                    is_scripting=true
+                    ;;
+                "go")
+                    compiler="go build"
+                    file_type=".go"
+                    ;;
+                "rust")
+                    compiler="rustc"
+                    file_type=".rs"
+                    ;;
+                "ruby")
+                    compiler="ruby"
+                    file_type=".rb"
+                    is_scripting=true
+                    ;;
+                "php")
+                    compiler="php"
+                    file_type=".php"
+                    is_scripting=true
+                    ;;
+                "swift")
+                    compiler="swiftc"
+                    file_type=".swift"
+                    ;;
+                "kotlin")
+                    compiler="kotlinc"
+                    file_type=".kt"
+                    ;;
+                "scala")
+                    compiler="scalac"
+                    file_type=".scala"
+                    ;;
+                "haskell")
+                    compiler="ghc"
+                    file_type=".hs"
+                    ;;
+                "perl")
+                    compiler="perl"
+                    file_type=".pl"
+                    is_scripting=true
+                    ;;
+                "bash" | "shell")
+                    compiler="bash"
+                    file_type=".sh"
+                    is_scripting=true
+                    ;;
+                "typescript" | "ts")
+                    compiler="tsc"
+                    file_type=".ts"
+                    ;;
+                "csharp" | "c#")
+                    compiler="csc"
+                    file_type=".cs"
+                    ;;
+                "objective-c")
+                    compiler="clang"
+                    file_type=".m"
+                    ;;
+                "r")
+                    compiler="Rscript"
+                    file_type=".r"
+                    is_scripting=true
+                    ;;
+                "dart")
+                    compiler="dart"
+                    file_type=".dart"
+                    ;;
+                "assembly" | "asm")
+                    compiler="nasm"
+                    file_type=".asm"
+                    ;;
+                "fortran")
+                    compiler="gfortran"
+                    file_type=".f90"
+                    ;;
+                "ada")
+                    compiler="gnat"
+                    file_type=".ada"
+                    ;;
+                "lisp")
+                    compiler="sbcl"
+                    file_type=".lisp"
+                    ;;
+                "lua")
+                    compiler="lua"
+                    file_type=".lua"
+                    is_scripting=true
+                    ;;
+                *)
+                    echo "Unsupported language: $extracted_language. Using default compiler: $compiler"
+                    ;;
+            esac
+            echo "Using compiler: $compiler for files with extension: $file_type"
+            return 0
+        fi
+    fi
+    
+    # If no specific language mentioned, try to infer from file extensions in current directory
+    common_extensions=(".c" ".cpp" ".py" ".java" ".js" ".go" ".rs" ".rb" ".php" ".swift" ".kt" ".scala" ".hs" ".pl" ".sh" ".ts" ".cs" ".m" ".r" ".dart" ".asm" ".f90" ".ada" ".lisp" ".lua")
+    for ext in "${common_extensions[@]}"; do
+        if [ $(find . -type f -name "*$ext" | wc -l) -gt 0 ]; then
+            echo "Detected files with extension $ext in the project directory"
+            file_type="$ext"
+            case "$ext" in
+                ".c") compiler="gcc" ;;
+                ".cpp") compiler="g++" ;;
+                ".py") compiler="python3"; is_scripting=true ;;
+                ".java") compiler="javac" ;;
+                ".js") compiler="node"; is_scripting=true ;;
+                ".go") compiler="go build" ;;
+                ".rs") compiler="rustc" ;;
+                ".rb") compiler="ruby"; is_scripting=true ;;
+                ".php") compiler="php"; is_scripting=true ;;
+                ".swift") compiler="swiftc" ;;
+                ".kt") compiler="kotlinc" ;;
+                ".scala") compiler="scalac" ;;
+                ".hs") compiler="ghc" ;;
+                ".pl") compiler="perl"; is_scripting=true ;;
+                ".sh") compiler="bash"; is_scripting=true ;;
+                ".ts") compiler="tsc" ;;
+                ".cs") compiler="csc" ;;
+                ".m") compiler="clang" ;;
+                ".r") compiler="Rscript"; is_scripting=true ;;
+                ".dart") compiler="dart" ;;
+                ".asm") compiler="nasm" ;;
+                ".f90") compiler="gfortran" ;;
+                ".ada") compiler="gnat" ;;
+                ".lisp") compiler="sbcl" ;;
+                ".lua") compiler="lua"; is_scripting=true ;;
+            esac
+            echo "Using compiler: $compiler for files with extension: $file_type"
+            return 0
+        fi
     done
-    #Ajoute un espace après avoir ajouté tous les SRC dans le Makefile
+    
+    echo "Could not determine programming language. Using default compiler: $compiler"
+    rm "$temp_file"
+    return 1
+}
+
+generate_makefile() {
+    # Ajout de l'en-tête du Makefile
+    add_header $makefile_name "make"
+
+    if [ "$extracted_language" == "haskell" ]; then
+        echo "BINARY_PATH := \$(shell stack path --local-install-root)
+NAME = $binary_name
+all:
+    stack build
+    cp \$(BINARY_PATH)/bin/\$(NAME)-exe ./\$(NAME)
+
+clean:
+    stack clean
+
+fclean: clean
+    rm -f \$(NAME)
+    rm -rf .stack-work
+
+re: fclean all" > $makefile_name
+        echo "Haskell Makefile generated: $makefile_name"
+        return
+    fi
+
+    # Ajout des sources
+    echo "SRC = \\" >> $makefile_name
+    count=0
+    for file in $files; do
+        if [ $count -eq 0 ]; then
+            echo -e "\t$file \\" >> $makefile_name
+        elif [ "$file" != "${files##* }" ]; then
+            echo -e "\t$file \\" >> $makefile_name
+        else
+            echo -e "\t$file" >> $makefile_name
+        fi
+        count=$((count + 1))
+    done
     echo "" >> $makefile_name
-    #Ajoute la compilation des objets dans le Makefile
-    echo "OBJ = \${SRC:$file_type=.o}" >> $makefile_name
-    #Ajoute les CFLAGS important
-    #-g3 permets de compiler avec valgrind pour les différentes erreurs que vous pouvez rencontrer
-    #-Wall -Wextra permets de récupérer les différentes erreurs lors de la compilation avec le Makefile
-    echo "CFLAGS = -g3 -Wall -Wextra -Iinclude" >> $makefile_name
-    #Cette condition permet de vérifier si on veut générer un Makefile pour une lib
+
+    # Ajout des objets et des flags
+    echo "OBJ_DIR = build" >> $makefile_name
+    echo "OBJ = \$(SRC:%.c=\$(OBJ_DIR)/%.o)" >> $makefile_name
+    echo "CFLAGS += -g3 -Wall -Wextra -Iinclude" >> $makefile_name
+
+    
     if [ "$lib" == true ]; then
-        #Ajoute le nom du binaire avec un .a après le nom du fichier afin d'informer que c'est une lib
-        #dans le Makefile
         echo "NAME = $binary_name.a" >> $makefile_name
     else
-        #Ajoute le nom du binaire dans le Makefile
         echo "NAME = $binary_name" >> $makefile_name
     fi
-    #Ajoute la règle all qui appelle la règle NAME
-    echo "all: \$(NAME)" >> $makefile_name
-    #Ajoute une ligne vide
     echo "" >> $makefile_name
-    #Ajoute la règle NAME elle permet de compiler l'ensemble des fichiers en un fichier
-    echo -e "\$(NAME): \$(OBJ)" >> $makefile_name
-    #Vérifie si le Makefile est pour une lib
-    if [ "$lib" == true ]; then
-        #Si on utilise la paramètre -force sa permets d'appeler un autre Makefile lorsque
-        #le Makefile est pour une lib
-        if [ "$force" == true ]; then
-            #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
-            for make in $selected_makefiles; do
-                #Ajoute les Makefile dans le fichier Makefile
-                echo -e "\tmake -C $make re" >> $makefile_name
-            done
-        fi
-        #Ajoute la commande de compilation dans le Makefile pour compiler une lib
-        echo -e "\tar rc \$(NAME) \$(OBJ)" >> $makefile_name
+
+    case "$file_type" in
+        ".c")
+            compile_cmd="$compiler \$(CFLAGS) -c \$< -o \$@"
+            link_cmd="$compiler \$(OBJ) -o \$(NAME)"
+            ;;
+        ".cpp")
+            compile_cmd="$compiler \$(CXXFLAGS) -c \$< -o \$@"
+            link_cmd="$compiler \$(OBJ) -o \$(NAME)"
+            ;;
+        ".java")
+            compile_cmd="$compiler \$< -d \$(OBJ_DIR)"
+            link_cmd="java -cp \$(OBJ_DIR) \$(NAME)"
+            ;;
+        ".py" | ".rb" | ".pl" | ".php" | ".js" | ".sh" | ".r" | ".lua")
+            # For scripting languages, create a wrapper
+            compile_cmd="cp \$< \$(OBJ_DIR)/\$(notdir \$<)"
+            link_cmd="chmod +x \$(OBJ_DIR)/* && ln -sf \$(OBJ_DIR)/main$file_type \$(NAME)"
+            ;;
+        ".go")
+            compile_cmd="cp \$< \$(OBJ_DIR)/\$(notdir \$<)"
+            link_cmd="cd \$(OBJ_DIR) && go build -o ../\$(NAME) ."
+            ;;
+        ".rs")
+            compile_cmd="rustc -c \$< -o \$@"
+            link_cmd="rustc \$(wildcard \$(OBJ_DIR)/*.o) -o \$(NAME)"
+            ;;
+        ".ts")
+            compile_cmd="tsc \$< --outDir \$(OBJ_DIR)"
+            link_cmd="ln -sf \$(OBJ_DIR)/main.js \$(NAME)"
+            ;;
+        # Add more cases for other languages
+        *)
+            # Default
+            compile_cmd="$compiler -c \$< -o \$@"
+            link_cmd="$compiler \$(OBJ) -o \$(NAME)"
+            ;;
+    esac
+    
+    # Modify the make all rule based on language type
+    if [ "$is_scripting" = true ]; then
+        # For scripting languages
+        echo "all: \$(NAME)" >> $makefile_name
+        echo -e "\tmkdir -p \$(OBJ_DIR)" >> $makefile_name
+        echo -e "\t$link_cmd" >> $makefile_name
     else
-        #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
-        for make in $selected_makefiles; do
-            #Ajoute les Makefile avec l'appel de re dans le fichier Makefile
-            echo -e "\tmake -C $make re" >> $makefile_name
-        done
-        #Ajoute la commande de compilation dans le Makefile pour lier les fichiers source
-        #en executable
-        echo -e "\t$compiler \${OBJ} -o \${NAME} your_libs" >> $makefile_name
+        # For compiled languages
+        echo "all: \$(OBJ_DIR) \$(NAME)" >> $makefile_name
     fi
-    #Ajoute la règle clean
-    echo -e "\nclean:" >> $makefile_name
-    #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
+    
+    # ...rest of Makefile generation...
+    
+    # Modify the compilation rules based on language
+    echo -e "\$(OBJ_DIR)/%.o: %$file_type | \$(OBJ_DIR)" >> $makefile_name
+    echo -e "\t$compile_cmd" >> $makefile_name
+    
+    # Modify the linking rule
+    if [ "$is_scripting" = true ]; then
+        # For scripting languages, we might need different rules
+        echo "\$(NAME): \$(SRC)" >> $makefile_name
+    else
+        # For compiled languages
+        echo "\$(NAME): \$(OBJ)" >> $makefile_name
+    fi
+    
+    # Add the linking command
+    echo -e "\t$link_cmd" >> $makefile_name
+
+    echo "\$(OBJ_DIR):" >> $makefile_name
+    echo -e "\tmkdir -p \$(OBJ_DIR)" >> $makefile_name
+    echo "" >> $makefile_name
+
+    echo "\$(OBJ_DIR)/%.o: %.c | \$(OBJ_DIR)" >> $makefile_name
+    echo -e "\t@mkdir -p \$(dir \$@)" >> $makefile_name
+    echo -e "\tgcc \$(CFLAGS) -c \$< -o \$@" >> $makefile_name
+    echo "" >> $makefile_name
+
+    # Ajout des règles de nettoyage
+    echo "clean:" >> $makefile_name
     for make in $selected_makefiles; do
-        #Ajoute les Makefile avec l'appel de clean dans le fichier Makefile
         echo -e "\tmake -C $make clean" >> $makefile_name
     done
-    #Ajoute la commande qui permets de supprimer l'ensemble des fichiers .o
-    echo -e "\trm -f \${OBJ}" >> $makefile_name
-    #Ajoute la règle fclean, elle appelle la régle clean avant de faire ses actions
-    echo -e "fclean: clean" >> $makefile_name
-    #Parcoure les Makefiles qui ont été sélectionner par l'utilisateur
+    echo -e "\trm -rf \$(OBJ_DIR)" >> $makefile_name
+    echo -e "\trm -rf vgcore.*" >> $makefile_name
+    echo "" >> $makefile_name
+
+    echo "fclean: clean" >> $makefile_name
     for make in $selected_makefiles; do
-        #Ajoute les Makefile avec l'appel de fclean dans le fichier Makefile
         echo -e "\tmake -C $make fclean" >> $makefile_name
     done
-    #Ajoute la commande qui permets de supprimer le fichier qui se trouve dans NAME
-    echo -e "\trm -f \${NAME}" >> $makefile_name
-    #Ajoute la règle re qui appelle fclean et all
-    echo -e "re: fclean all" >> $makefile_name
+    echo -e "\trm -f \$(NAME)" >> $makefile_name
+    echo "" >> $makefile_name
+
+    echo "re: fclean all" >> $makefile_name
 }
+
 #Cette boucle permet de parcourir les paramètres donnés en argument
 #$#
 #   est une variable spéciale qui contient le nombre d'arguments passés au script
@@ -240,6 +663,12 @@ if [ "$lib" != true ] || [ "$force" == true ]; then
             selected_makefiles+=("${makefiles[$index]//Makefile/}")
         done
     fi
+fi
+
+# Add this before the generate_makefile call
+if [ "$binary_name" == "bin_name" ]; then
+    extract_binary_name_from_pdf
+    extract_language_and_compiler_from_pdf
 fi
 #Appel la fonction qui se trouve ci-dessus
 generate_makefile
