@@ -1,0 +1,398 @@
+#!/bin/bash
+################################################################################
+# Script: fexport
+# Description: 
+#   Utilitaire pour exporter des fonctions et macros d'un projet.
+#   Ce script analyse les fichiers source d'un projet pour trouver des fonctions
+#   et macros, puis les exporte dans un fichier JSON centralisé qui peut être
+#   réutilisé par d'autres projets via fimport.
+#
+# Fonctionnalités:
+#   - Initialisation pour différents langages de programmation
+#   - Détection automatique des fonctions dans les fichiers source
+#   - Extraction des includes et dépendances
+#   - Export de macros pour réutilisation
+#   - Gestion centralisée des exports via un fichier JSON
+#   - Prévention des duplications d'exports
+#
+# Utilisation: 
+#   ./fexport [OPTION] [ARGUMENT]
+#
+# Options:
+#   -init <language>  Initialiser pour un langage de programmation spécifique
+#   -macros           Exporter toutes les macros pour le langage courant
+#   -h                Afficher l'aide
+#   -u                Mettre à jour la commande vers la dernière version
+#
+# Arguments:
+#   nom_fonction      Nom de la fonction à exporter
+#
+# Prérequis:
+#   - jq doit être installé (sudo apt install jq)
+#   - Un fichier de règles ($HOME/.fcp/rules.json)
+#
+# Configuration:
+#   Le script crée un fichier .current_language dans le dossier .fcp du projet
+#   pour stocker le langage courant du projet.
+#
+################################################################################
+
+# Variables globales
+rules_file="$HOME/.fcp/rules.json"
+output_file="$HOME/.fcp/functions_exports.json"
+project_config_dir="$(pwd)/.fcp"
+current_language_file="$project_config_dir/.current_language"
+current_language=""
+total_functions=0
+exported_functions=0
+skipped_functions=0
+dependency_functions=0
+exported_macros=0
+visited_funcs=""
+
+# Fonction: show_help
+# Description:
+#   Affiche l'aide et les options disponibles pour l'utilisateur
+# Paramètres:
+#   Aucun
+# Retour:
+#   Affiche l'aide à l'écran
+show_help() {
+    echo "Fast Command Project - Function Export Utility"
+    echo ""
+    echo "Usage: fexport [OPTION] [ARGUMENT]"
+    echo ""
+    echo "Options:"
+    echo "  -init <language>  Initialize for a specific programming language"
+    echo "  -macros           Export all macros for the current language"
+    echo "  -h                Display this help message"
+    echo "  -u                Update the command to the latest version"
+    echo ""
+    echo "Examples:"
+    echo "  fexport -init c       # Initialize for C language"
+    echo "  fexport my_function   # Export 'my_function'"
+    echo "  fexport -macros       # Export all macros"
+    echo ""
+    echo "Report bugs to: <your-contact-info>"
+}
+
+# Fonction: update_command
+# Description:
+#   Met à jour la commande fexport vers la dernière version via script-manager
+# Paramètres:
+#   Aucun
+# Retour:
+#   0 en cas de succès, 1 en cas d'erreur
+update_command() {
+    echo "Checking for updates..."
+    
+    # Vérifier si script-manager est installé
+    if command -v script-manager &>/dev/null; then
+        echo "Running update via script-manager..."
+        if script-manager fexport rules.json; then
+            echo "Update completed successfully!"
+        else
+            echo "Error: Update failed"
+            return 1
+        fi
+    else
+        echo "Error: script-manager not found"
+        echo "Please install script-manager first"
+        return 1
+    fi
+}
+
+# Fonction: ensure_project_config_dir
+# Description:
+#   S'assure que le dossier de configuration du projet existe
+# Paramètres:
+#   Aucun
+# Retour:
+#   Crée le dossier de configuration s'il n'existe pas
+ensure_project_config_dir() {
+    if [ ! -d "$project_config_dir" ]; then
+        mkdir -p "$project_config_dir"
+        echo "Created project config directory: $project_config_dir"
+    fi
+}
+
+# Fonction: ensure_output_file
+# Description:
+#   Vérifie et initialise le fichier d'exportation JSON si nécessaire
+# Paramètres:
+#   Aucun
+# Retour:
+#   Crée ou met à jour le fichier de sortie JSON
+ensure_output_file() {
+    if [ ! -f "$output_file" ]; then
+        echo "Notice: Creating new output file at $output_file"
+        echo "{}" > "$output_file"
+        
+        # Si un langage est déjà défini, initialiser sa structure
+        if [ -f "$current_language_file" ]; then
+            local lang=$(cat "$current_language_file")
+            jq --arg lang "$lang" \
+               'if has($lang) then . else . + {($lang): {"headers": {}, "functions": {}, "macros": {}}} end' \
+               "$output_file" > tmp.json && mv tmp.json "$output_file"
+        fi
+    fi
+}
+
+# Fonction: initialize_language
+# Description:
+#   Initialise le script pour un langage de programmation spécifique
+# Paramètres:
+#   $1 - Le langage de programmation à initialiser
+# Retour:
+#   Crée les fichiers de configuration nécessaires et initialise la structure JSON
+initialize_language() {
+    ensure_project_config_dir
+    
+    local language="$1"
+    if [ ! -f "$rules_file" ]; then
+        echo "Error: Rules file not found at $rules_file"
+        exit 1
+    fi
+
+    # Vérifier si le langage existe dans rules.json
+    if ! jq -e ".languages[\"$language\"]" "$rules_file" > /dev/null 2>&1; then
+        echo "Error: Language '$language' not found in rules file"
+        exit 1
+    fi
+
+    current_language="$language"
+    echo "$language" > "$current_language_file"
+
+    # Initialiser le fichier JSON si nécessaire
+    if [ ! -f "$output_file" ]; then
+        echo "{}" > "$output_file"
+    fi
+
+    # Ajouter la structure pour le langage si elle n'existe pas
+    jq --arg lang "$language" \
+       'if has($lang) then . else . + {($lang): {"headers": {}, "functions": {}, "macros": {}}} end' \
+       "$output_file" > tmp.json && mv tmp.json "$output_file"
+
+    echo "Initialized for $language language"
+    
+    # Réinitialiser les compteurs
+    total_functions=0
+    exported_functions=0
+    skipped_functions=0
+    dependency_functions=0
+    exported_macros=0
+    visited_funcs=""
+}
+
+# Fonction: export_function
+# Description:
+#   Exporte une fonction spécifique et ses dépendances dans le fichier JSON
+# Paramètres:
+#   $1 - Le nom de la fonction à exporter
+#   $2 - Booléen indiquant si c'est une dépendance (true/false)
+# Retour:
+#   0 en cas de succès, 1 si la fonction n'est pas trouvée
+export_function() {
+    local func_name="$1"
+    local is_dependency="${2:-false}"
+    
+    # S'assurer que le fichier de sortie existe
+    ensure_output_file
+    
+    # Si le fichier .current_language n'existe pas, demander à l'utilisateur
+    if [ ! -f "$current_language_file" ]; then
+        echo "Error: No language initialized. Please run 'fexport -init <language>' first"
+        exit 1
+    fi
+    
+    local language=$(cat "$current_language_file")
+    
+    
+    # Incrémenter le compteur total
+    if [ "$is_dependency" = "false" ]; then
+        ((total_functions++))
+    else
+        ((dependency_functions++))
+    fi
+    
+    # Vérifier si la fonction a déjà été visitée
+    if [[ "$visited_funcs" == *":$func_name:"* ]]; then
+        ((skipped_functions++))
+        echo "Function '$func_name' already processed, skipping"
+        return 0
+    fi
+    
+    # Marquer la fonction comme visitée
+    visited_funcs=":$func_name:$visited_funcs"
+    
+    # Vérifier si la fonction existe déjà dans le fichier JSON
+    if jq -e ".\"$language\".functions.\"$func_name\"" "$output_file" > /dev/null 2>&1; then
+        ((skipped_functions++))
+        echo "Function '$func_name' already exported, skipping"
+        return 0
+    fi
+    
+    local patterns=$(jq -r ".languages[\"$language\"].function_definition_patterns[]" "$rules_file")
+    local extensions=$(jq -r ".languages[\"$language\"].source_extensions[]" "$rules_file" | tr '\n' '|' | sed 's/|$//')
+
+    # Rechercher les fichiers source
+    local files=$(find . -type f -regex ".*\.\($extensions\)$" | grep -v "/\.")
+    local found=false
+    local found_file=""
+    local function_content=""
+
+    for file in $files; do
+        for pattern in $patterns; do
+            # Remplacer {FUNC_NAME} par le nom de la fonction
+            local search_pattern=$(echo "$pattern" | sed "s/{FUNC_NAME}/$func_name/g")
+            
+            # Chercher la ligne de début de la fonction
+            local line_num=$(grep -n -E "$search_pattern" "$file" | cut -d':' -f1)
+            if [ -n "$line_num" ]; then
+                echo "Found function '$func_name' in file: $file at line $line_num"
+                
+                # Extraire le contenu complet de la fonction avec comptage d'accolades
+                function_content=$(awk -v start=$line_num '
+                    BEGIN { in_function = 0; braces = 0; }
+                    NR >= start {
+                        if (!in_function) {
+                            if ($0 ~ /\{/) { 
+                                in_function = 1;
+                                braces = 1;
+                            }
+                            print $0;
+                        } else {
+                            print $0;
+                            # Compter les accolades ouvrantes et fermantes
+                            for (i=1; i<=length($0); i++) {
+                                c = substr($0, i, 1);
+                                if (c == "{") braces++;
+                                if (c == "}") braces--;
+                                # Si toutes les accolades sont fermées, on a fini
+                                if (in_function && braces == 0) exit;
+                            }
+                        }
+                    }' "$file")
+                
+                found=true
+                found_file="$file"
+                break 2
+            fi
+        done
+    done
+
+    if ! $found; then
+        echo "Error: Function '$func_name' not found"
+        return 1
+    fi
+
+    # Extraire les includes nécessaires
+    local includes=$(grep -E "^#include" "$found_file" | sort | uniq | jq -R -s 'split("\n") | map(select(length > 0))')
+
+    # Ajouter la fonction au fichier JSON
+    jq --arg lang "$language" \
+       --arg name "$func_name" \
+       --arg path "$found_file" \
+       --arg content "$function_content" \
+       --argjson includes "$includes" \
+       '.[$lang].functions[$name] = {
+           "file_path": $path,
+           "content": $content,
+           "includes": $includes
+       }' "$output_file" > tmp.json && mv tmp.json "$output_file"
+
+    ((exported_functions++))
+    echo "Function '$func_name' exported successfully"
+}
+
+# Fonction: export_macros
+# Description:
+#   Exporte toutes les macros du langage courant dans le fichier JSON
+# Paramètres:
+#   Aucun
+# Retour:
+#   Ajoute les macros trouvées au fichier JSON
+export_macros() {
+    # S'assurer que le fichier de sortie existe
+    ensure_output_file
+    
+    # Si le fichier .current_language n'existe pas, demander à l'utilisateur
+    if [ ! -f "$current_language_file" ]; then
+        echo "Error: No language initialized. Please run 'fexport -init <language>' first"
+        exit 1
+    fi
+    
+    local language=$(cat "$current_language_file")
+    local macro_patterns=$(jq -r ".languages[\"$language\"].macro_patterns[]" "$rules_file")
+    local extensions=$(jq -r ".languages[\"$language\"].header_extensions[]" "$rules_file" | tr '\n' '|' | sed 's/|$//')
+
+    # Rechercher les fichiers header
+    local files=$(find . -type f -regex ".*\.\($extensions\)$" | grep -v "/\.")
+    for file in $files; do
+        for pattern in $macro_patterns; do
+            local macros=$(grep -E "$pattern" "$file")
+            while IFS= read -r macro; do
+                local macro_name=$(echo "$macro" | grep -oE "(?<=#define\s)[A-Z0-9_]+")
+                if [ -n "$macro_name" ]; then
+                    # Ajouter la macro au fichier JSON
+                    jq --arg lang "$language" \
+                       --arg name "$macro_name" \
+                       --arg content "$macro" \
+                       --arg file "$file" \
+                       '.[$lang].macros[$name] = {
+                           "content": $content,
+                           "file": $file
+                       }' "$output_file" > tmp.json && mv tmp.json "$output_file"
+                    ((exported_macros++))
+                fi
+            done <<< "$macros"
+        done
+    done
+
+    echo "Macros exported successfully"
+}
+
+# Bloc de traitement principal
+# Analyse les arguments de ligne de commande et exécute l'action correspondante
+case "$1" in
+    -init)
+        initialize_language "$2"
+        ;;
+    -macros)
+        export_macros
+        ;;
+    -h)
+        show_help
+        ;;
+    -u)
+        update_command
+        ;;
+    "")
+        # Si aucun argument n'est fourni, afficher l'aide
+        show_help
+        ;;
+    *)
+        export_function "$1"
+        ;;
+esac
+
+# Affichage du rapport d'exportation si une action a été effectuée
+if [[ "$1" != "-h" && "$1" != "-u" && "$1" != "" ]]; then
+    echo "------------------------------------------------------------"
+    echo "Export report:"
+    echo "  - Functions requested: $total_functions"
+    echo "  - Functions exported: $exported_functions"
+    echo "  - Functions skipped (already exported): $skipped_functions"
+    echo "  - Dependencies detected and exported: $dependency_functions"
+    echo "  - Macros extracted: $exported_macros"
+    
+    # Vérifier que le fichier de langage existe avant de tenter de lire son contenu
+    if [ -f "$current_language_file" ]; then
+        echo "  - Total functions in file: $(jq ".[\"$(cat "$current_language_file")\"].functions | length" "$output_file")"
+        echo "  - Total macros in file: $(jq ".[\"$(cat "$current_language_file")\"].macros | length" "$output_file")"
+    fi
+    
+    echo "  - Size of JSON file: $(du -h "$output_file" | cut -f1)"
+    echo "------------------------------------------------------------"
+    echo "Export completed. Output file: $output_file"
+fi

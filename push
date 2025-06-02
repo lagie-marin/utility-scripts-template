@@ -20,7 +20,7 @@ push_elem() {
     #Vérifie si call_script_manager est vrai
     if $call_script_manager; then
         #Appel la commande pour mettre à jours les commandes
-        script-manager
+        script-manager push
     fi
     git commit -m "$commit"
     git push

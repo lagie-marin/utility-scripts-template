@@ -1,23 +1,64 @@
 #!/bin/bash
-#Rend utilisable les commandes dans func dans se fichier
-#Pour l'image c'est le même principe que le include en c
+################################################################################
+# Script: genmake
+# Description: 
+#   Générateur automatique de Makefile pour divers projets de programmation.
+#   Ce script détecte les fichiers source dans un répertoire, identifie les
+#   exigences du projet, et génère un Makefile approprié basé sur le langage
+#   de programmation utilisé.
+#
+# Fonctionnalités:
+#   - Détection automatique du langage de programmation à partir des fichiers source
+#     ou de la documentation PDF
+#   - Support pour plusieurs langages de programmation (C, C++, Python, Java, etc.)
+#   - Génération de Makefile pour bibliothèques
+#   - Nom de binaire et dossier source personnalisables
+#   - Intégration avec d'autres Makefiles dans le projet
+#   - Support d'exclusion de dossiers
+#   - Analyse de PDF pour les exigences du projet
+#
+# Utilisation: 
+#   ./genmake [OPTIONS]
+#
+# Options:
+#   -l         Génère un Makefile pour une bibliothèque
+#   -c VALEUR  Spécifie le compilateur à utiliser
+#   -t VALEUR  Spécifie le type/extension de fichier à rechercher
+#   -f DOSSIER Définit le dossier où chercher les fichiers source
+#   -i DOSSIER Ignore le(s) dossier(s) spécifié(s) lors de la recherche
+#              (plusieurs dossiers peuvent être spécifiés l'un après l'autre)
+#   -n NOM     Définit le nom du binaire
+#   -force     Force l'inclusion d'autres Makefiles, même avec l'option -l
+#   -u         Met à jour les scripts via script-manager
+#
+################################################################################
+
+#Rend utilisable les commandes dans func dans ce fichier
+#Pour l'image c'est le même principe que le include en C
 source func
 
-folder_path="."
-files=""
-file_type=".c"
-makefiles=("Aucun")
-ignore_folders=()
-call_script_manager=false
-lib=false
-makefile_name="Makefile"
-binary_name="bin_name"
-selected_makefiles=()
-force=false
-ok_select=true
-compiler="gcc"
+# Variables globales - Contrôlent le comportement du script
+folder_path="."      # Répertoire par défaut pour rechercher les fichiers source
+files=""             # Stockera la liste des fichiers source trouvés
+file_type=".c"       # Extension de fichier par défaut à rechercher
+makefiles=("Aucun")  # Tableau pour stocker les Makefiles découverts
+ignore_folders=()    # Tableau pour les dossiers à exclure de la recherche
+call_script_manager=false  # Indique s'il faut appeler le gestionnaire de scripts pour les mises à jour
+lib=false            # Indique s'il faut générer un Makefile pour une bibliothèque
+makefile_name="Makefile"  # Nom du fichier Makefile à générer
+binary_name="bin_name"    # Nom du binaire par défaut
+selected_makefiles=()     # Makefiles sélectionnés par l'utilisateur
+force=false               # Force l'inclusion d'autres Makefiles même en mode bibliothèque
+ok_select=true            # Contrôle si la sélection est valide
+compiler="gcc"            # Compilateur par défaut
 
-#display_usage permets d'afficher les usages de la commande
+# Fonction: display_usage
+# Description:
+#   Affiche les options d'utilisation du script genmake
+# Paramètres:
+#   Aucun
+# Retour:
+#   Affiche l'aide à l'écran
 display_usage() {
     echo "Usage: $0 [-d] [-n name] [-l] [-force] [-f folderpath] [-i ignore_folder]"
 }
@@ -207,17 +248,50 @@ extract_language_and_compiler_from_pdf() {
         return 1
     fi
     # Try to find specific language mention pattern
-    language_line=$(grep -i -E "language:" "$temp_file" | awk -F'language:' '{print $2}' | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
+    language_line=$(grep -i -E "language:" "$temp_file" | awk -F'language:' '{print $2}' | tr '[:upper:]' '[:lower:]')
     if [ -n "$language_line" ]; then
-        # Extract potential language names and convert to lowercase for comparison
-        for lang in "c" "c++" "cpp" "python" "python3" "java" "javascript" "js" "go" "rust" "ruby" "php" "swift" "kotlin" "scala" "haskell" "perl" "bash" "shell" "typescript" "ts" "csharp" "c#" "objective-c" "r" "dart" "assembly" "asm" "fortran" "ada" "lisp" "lua"; do
-            # Convert language line to lowercase for comparison
-            language_line_lower=$(echo "$language_line" | tr '[:upper:]' '[:lower:]')
-            # Convert lang to lowercase too (though our list is already lowercase)
-            lang_lower=$(echo "$lang" | tr '[:upper:]' '[:lower:]')
+        # NEW CODE: Check for slash-separated language options
+        if [[ "$language_line" =~ "/" ]]; then
+            echo "Multiple language options detected in the PDF."
             
-            if echo "$language_line_lower" | grep -q "$lang_lower"; then
-                extracted_language="$lang_lower"
+            # Split the language options by '/'
+            IFS='/' read -ra language_options <<< "$language_line"
+            
+            # Display options to the user
+            echo "Please select a language:"
+            for i in "${!language_options[@]}"; do
+                # Trim whitespace from each option
+                language_options[$i]=$(echo "${language_options[$i]}" | xargs)
+                echo "$((i+1)): ${language_options[$i]}"
+            done
+            
+            # Get user's choice
+            read -p "Enter your choice (1-${#language_options[@]}): " lang_choice
+            
+            # Validate and set the chosen language
+            if [[ "$lang_choice" =~ ^[0-9]+$ ]] && 
+               [ "$lang_choice" -ge 1 ] && 
+               [ "$lang_choice" -le "${#language_options[@]}" ]; then
+                selected_language="${language_options[$((lang_choice-1))]}"
+                echo "Selected language: $selected_language"
+                language_line="$selected_language"  # Update language_line to the selected option
+            else
+                echo "Invalid selection. Using first option: ${language_options[0]}"
+                language_line="${language_options[0]}"
+            fi
+        fi
+        
+        # Continue with existing language detection
+        # Changed order: Check longer/more specific language names first
+        for lang in "c++" "cpp" "objective-c" "csharp" "c#" "javascript" "typescript" "python3" "python" "java" "js" "go" "rust" "ruby" "php" "swift" "kotlin" "scala" "haskell" "perl" "bash" "shell" "ts" "c" "r" "dart" "assembly" "asm" "fortran" "ada" "lisp" "lua"; do
+            # Use word boundary for more precise matching
+            if echo "$language_line" | grep -q "\b$lang\b"; then
+                extracted_language="$lang"
+                echo "Found programming language: $extracted_language"
+                break
+            # Fallback for special cases like "c++"
+            elif echo "$language_line" | grep -q "$lang"; then
+                extracted_language="$lang"
                 echo "Found programming language: $extracted_language"
                 break
             fi
@@ -226,13 +300,13 @@ extract_language_and_compiler_from_pdf() {
         if [ -n "$extracted_language" ]; then
             # Set compiler and file extension based on language
             case "$extracted_language" in
-                "c")
-                    compiler="gcc"
-                    file_type=".c"
-                    ;;
                 "c++" | "cpp")
                     compiler="g++"
                     file_type=".cpp"
+                    ;;
+                "c")
+                    compiler="gcc"
+                    file_type=".c"
                     ;;
                 "python" | "python3")
                     compiler="python3"
@@ -391,14 +465,19 @@ extract_language_and_compiler_from_pdf() {
     return 1
 }
 
-
-
+# Fonction: generate_makefile
+# Description:
+#   Génère le contenu du Makefile en fonction des paramètres et des fichiers détectés
+#   Adapte les règles de compilation selon le langage de programmation détecté
+# Paramètres:
+#   Aucun (utilise les variables globales)
+# Retour:
+#   Écrit le contenu dans le fichier $makefile_name
 generate_makefile() {
-    # Ajout de l'en-tête du Makefile
     add_header $makefile_name "make"
 
     if [ "$extracted_language" == "haskell" ]; then
-        echo -e "\nBINARY_PATH := \$(shell stack path --local-install-root)
+        echo "BINARY_PATH := \$(shell stack path --local-install-root)
 NAME = $binary_name
 all:
 \tstack build
@@ -533,12 +612,8 @@ re: fclean all" >> $makefile_name
     echo "re: fclean all" >> $makefile_name
 }
 
-#Cette boucle permet de parcourir les paramètres donnés en argument
-#$#
-#   est une variable spéciale qui contient le nombre d'arguments passés au script
-#-gt
-#   est un opérateur de comparaison numérique qui signifie "supérieur à"
-#donc $# -gt 0 vérifie si le nombre d'arguments est supérieur à 0
+# Boucle de traitement des arguments de ligne de commande
+# Analyse chaque option fournie et configure les variables globales en conséquence
 while [[ $# -gt 0 ]]; do
     #vérifie les différents cas de paramètre
     #-u: permets de faire la mises à jour des scripts
@@ -666,11 +741,22 @@ if [ "$lib" != true ] || [ "$force" == true ]; then
     fi
 fi
 
+# Move this section before file collection
 # Add this before the generate_makefile call
 if [ "$binary_name" == "bin_name" ]; then
     extract_binary_name_from_pdf
     extract_language_and_compiler_from_pdf
 fi
+
+# Now collect files with the correct extension
+if [[ -z "$ignore_folders" ]]; then
+    # Find files with the detected file extension 
+    files=$(find $folder_path -type f -name "*$file_type")
+else
+    files=$(find $folder_path -type f -name "*$file_type" | grep -vE "($ignore_folders)")
+fi
+
+
 #Appel la fonction qui se trouve ci-dessus
 generate_makefile
 echo "Makefile generated: $makefile_name"
