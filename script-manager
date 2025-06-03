@@ -11,18 +11,103 @@ REPO_URL="https://raw.githubusercontent.com/lagie-marin/utility-scripts-template
 # DOWNLOAD_PTR_URL est l'URL qui permet d'accéder au fichier à télécharger ou à mettre à jour
 DOWNLOAD_PTR_URL="$REPO_URL/download.ptr"
 
-# Si des arguments sont passés, ils sont utilisés comme liste de commandes
-if [ "$#" -gt 0 ]; then
-    SCRIPTS=("$@")
-else
-    # Sinon, récupère la liste des scripts par défaut depuis le fichier distant
-    SCRIPTS=($(curl -s -L "$DOWNLOAD_PTR_URL" | head -n 1))
-fi
-
 # LOCAL_FOLDER contient le dossier de destination final pour les scripts
 LOCAL_FOLDER="/usr/local/bin"
 # DEST_FOLDER contient le dossier où les fichiers seront téléchargés
 DEST_FOLDER="/usr/utility-scripts-template"
+
+# Fonction pour charger les dépendances d'un script
+load_dependencies() {
+    local download_content=$(curl -s -L "$DOWNLOAD_PTR_URL")
+    
+    # Créer un tableau associatif pour stocker les dépendances
+    echo "declare -A DEPENDENCIES"
+    
+    while IFS= read -r line; do
+        # Ignorer les lignes commentées, vides ou les commentaires de fichier
+        [[ "$line" =~ ^[[:space:]]*#.*$ || -z "$line" || "$line" =~ ^// ]] && continue
+        
+        # Extraire la commande et ses dépendances
+        if [[ "$line" == *":"* ]]; then
+            local cmd=$(echo "$line" | cut -d':' -f1)
+            local deps=$(echo "$line" | cut -d':' -f2)
+            # Échapper correctement les valeurs pour l'évaluation
+            echo "DEPENDENCIES[\"$cmd\"]=\"$deps\""
+        fi
+    done <<< "$download_content"
+    
+    return 0
+}
+
+# Récupère récursivement toutes les dépendances d'un script
+get_all_dependencies() {
+    local script="$1"
+    local deps="${DEPENDENCIES[$script]}"
+    local all_deps=()
+    
+    if [ -z "$deps" ]; then
+        # Pas de dépendances
+        return
+    fi
+    
+    IFS=',' read -ra dep_array <<< "$deps"
+    for dep in "${dep_array[@]}"; do
+        # Éviter les dépendances circulaires et les entrées vides
+        if [[ -n "$dep" && ! " ${PROCESSED_DEPS[*]} " =~ " ${dep} " ]]; then
+            PROCESSED_DEPS+=("$dep")
+            all_deps+=("$dep")
+            # Résolution récursive des dépendances
+            get_all_dependencies "$dep"
+        fi
+    done
+    
+    # Ajoute les dépendances trouvées à la liste des scripts
+    for dep in "${all_deps[@]}"; do
+        if [[ -n "$dep" && ! " ${SCRIPTS[*]} " =~ " ${dep} " ]]; then
+            SCRIPTS=("$dep" "${SCRIPTS[@]}")
+        fi
+    done
+}
+
+# Si des arguments sont passés, ils sont utilisés comme liste de commandes
+if [ "$#" -gt 0 ]; then
+    # Définir les variables pour les dépendances
+    declare -A DEPENDENCIES
+    PROCESSED_DEPS=()
+    
+    # Charger toutes les dépendances
+    eval "$(load_dependencies)"
+    
+    # Liste initiale de scripts fournie en argument
+    INITIAL_SCRIPTS=("$@")
+    SCRIPTS=()
+    
+    # Pour chaque script donné en argument, récupérer ses dépendances
+    for script in "${INITIAL_SCRIPTS[@]}"; do
+        if [[ ! " ${SCRIPTS[*]} " =~ " ${script} " ]]; then
+            SCRIPTS+=("$script")
+        fi
+        PROCESSED_DEPS=()
+        get_all_dependencies "$script"
+    done
+    
+    echo "Scripts à installer (avec dépendances): ${SCRIPTS[*]}"
+else
+    # Récupérer toutes les commandes du fichier download.ptr
+    SCRIPTS=()
+    download_content=$(curl -s -L "$DOWNLOAD_PTR_URL")
+    
+    while IFS= read -r line; do
+        # Ignorer les commentaires et lignes vides
+        [[ "$line" =~ ^[[:space:]]*#.*$ || -z "$line" || "$line" =~ ^// ]] && continue
+        
+        # Extraire uniquement le nom du script (avant le ':')
+        if [[ "$line" == *":"* ]]; then
+            script=$(echo "$line" | cut -d':' -f1)
+            SCRIPTS+=("$script")
+        fi
+    done <<< "$download_content"
+fi
 
 # get_library_repo permet de récupérer le lien vers le repo où se situe la lib de l'utilisateur.
 function get_library_repo {

@@ -6,21 +6,28 @@ echo "Configuration de l'environnement FCP..."
 # Crée les répertoires nécessaires
 mkdir -p "$HOME/.fcp/bin"
 
+# Télécharger le fichier
+if command -v curl &> /dev/null; then
+    curl -s "https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/rules.json" -o "$HOME/.fcp/rules.json"
+    echo "Fichier rules.json téléchargé avec succès via curl"
+elif command -v wget &> /dev/null; then
+    wget -q "https://raw.githubusercontent.com/lagie-marin/utility-scripts-template/main/rules.json" -O "$HOME/.fcp/rules.json"
+    echo "Fichier rules.json téléchargé avec succès via wget"
+else
+    echo "Erreur: Ni curl ni wget n'est installé. Veuillez installer l'un d'eux pour télécharger rules.json."
+    exit 1
+fi
+
 # Vérifie si la configuration est déjà dans .bashrc
-if ! grep -q "fimport_completion.bash" "$HOME/.bashrc"; then
+if ! grep -q "Configuration Fast Command Project (FCP)" "$HOME/.bashrc"; then
     echo -e "\n# Configuration Fast Command Project (FCP)" >> "$HOME/.bashrc"
     echo "if [ -d \"\$HOME/.fcp/bin\" ] ; then" >> "$HOME/.bashrc"
     echo "    export PATH=\"\$HOME/.fcp/bin:\$PATH\"" >> "$HOME/.bashrc"
     echo "fi" >> "$HOME/.bashrc"
-    echo "if [ -f \"\$HOME/.fcp/bin/fimport_completion.bash\" ]; then" >> "$HOME/.bashrc"
-    echo "    source \"\$HOME/.fcp/bin/fimport_completion.bash\"" >> "$HOME/.bashrc"
-    echo "fi" >> "$HOME/.bashrc"
     
     echo "Configuration ajoutée à ~/.bashrc"
+    echo "Installation terminée. Pour activer l'autocomplétion immédiatement, exécutez:"
+    echo "  source ~/.bashrc"
 else
     echo "Configuration déjà présente dans ~/.bashrc"
 fi
-
-echo "Installation terminée. Pour activer l'autocomplétion immédiatement, exécutez:"
-echo "  source ~/.bashrc"
-echo "  source ~/.fcp/bin/fimport_completion.bash"

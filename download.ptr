@@ -19,4 +19,3 @@ help_cmd:
 help_emacs:
 push:script-manager
 translate_csr:script-manager
-rules.json:

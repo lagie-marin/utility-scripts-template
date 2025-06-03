@@ -690,7 +690,7 @@ done
 #Si call_script_manager est vrai il appelle la commande script-manager qui va mettre
 #à jour les différents scripts
 if $call_script_manager; then
-    script-manager
+    script-manager genmake
 fi
 #Vérifie qu'il n'y a pas de dossier ignorer
 #-z: est un opérateur de test qui renvoie vrai si la longueur de la chaine est 0

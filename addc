@@ -32,7 +32,7 @@ done
 # Si call_script_manager est vrai alors il va mettre à
 # jour le script s'il en a besoin
 if $call_script_manager; then
-    script-manager
+    script-manager addc
 fi
 
 # Récupère le nom du fichier

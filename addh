@@ -10,7 +10,7 @@ filename=""
 ok_select=true
 #Vérifie s'il n'y a pas le -u
 if [ "$1" == "-u" ]; then
-    script-manager
+    script-manager addh
 fi
 # Vérifie le nombre d'arguments
 if (( $# < 1 )) || (( $# > 2 )); then
